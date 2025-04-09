@@ -28,6 +28,9 @@ const menuSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   description: z.string().optional(),
   status: z.enum(['active', 'inactive']),
+  displayOrder: z.coerce
+    .number()
+    .min(1, { message: 'Display order must be non-negative' }),
 });
 
 interface MenuFormProps {
@@ -36,24 +39,21 @@ interface MenuFormProps {
   onCancel?: () => void;
 }
 
-export function MenuForm({ 
-  initialData, 
-  onSubmit, 
-  onCancel 
-}: MenuFormProps) {
+export function MenuForm({ initialData, onSubmit, onCancel }: MenuFormProps) {
   const form = useForm<z.infer<typeof menuSchema>>({
     resolver: zodResolver(menuSchema),
     defaultValues: initialData || {
       name: '',
       description: '',
       status: 'active',
+      displayOrder: 1,
     },
   });
 
   const handleSubmit = (values: z.infer<typeof menuSchema>) => {
     onSubmit({
       ...values,
-      id: initialData?.id, // Preserve existing ID if editing
+      id: initialData?.id || '', // Preserve existing ID if editing
       description: values.description || '', // Ensure description is always a string
     });
   };

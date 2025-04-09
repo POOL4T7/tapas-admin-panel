@@ -99,7 +99,7 @@ export function CategoryForm({
   const handleSubmit = (values: z.infer<typeof categorySchema>) => {
     onSubmit({
       ...values,
-      id: initialData?.id, // Preserve existing ID if editing
+      id: initialData?.id || '', // Preserve existing ID if editing
       description: values.description || '', // Ensure description is always a string
       image: values.image, // Pass the uploaded file
     });

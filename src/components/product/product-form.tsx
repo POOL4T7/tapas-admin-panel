@@ -73,7 +73,7 @@ export function ProductForm({
   const handleSubmit = (values: z.infer<typeof productSchema>) => {
     onSubmit({
       ...values,
-      id: initialData?.id, // Preserve existing ID if editing
+      id: initialData?.id || '', // Preserve existing ID if editing
       image: values.image,
     });
   };
