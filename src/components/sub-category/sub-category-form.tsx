@@ -33,27 +33,27 @@ const subCategorySchema = z.object({
   categoryId: z.string({ required_error: 'Please select a category' }),
   description: z.string().optional(),
   status: z.enum(['active', 'inactive']),
-  image: z.union([
-    z.instanceof(File).optional(), 
-    z.string().optional()
-  ]),
+  image: z.string().optional(),
+  displayOrder: z.coerce
+    .number()
+    .min(0, { message: 'Display order must be non-negative' }),
 });
 
 interface SubCategoryFormProps {
-  initialData?: SubCategory & { imagePreview?: string };
+  initialData?: SubCategory;
   categories: Category[];
   onSubmit: (data: SubCategory) => void;
   onCancel?: () => void;
 }
 
-export function SubCategoryForm({ 
-  initialData, 
-  categories, 
-  onSubmit, 
-  onCancel 
+export function SubCategoryForm({
+  initialData,
+  categories,
+  onSubmit,
+  onCancel,
 }: SubCategoryFormProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(
-    initialData?.imagePreview || initialData?.image || null
+    initialData?.image || null
   );
 
   const form = useForm<z.infer<typeof subCategorySchema>>({
@@ -63,7 +63,8 @@ export function SubCategoryForm({
       categoryId: initialData?.categoryId || '',
       description: initialData?.description || '',
       status: initialData?.status || 'active',
-      image: initialData?.image,
+      image: initialData?.image || '',
+      displayOrder: initialData?.displayOrder || 0,
     },
   });
 
@@ -81,7 +82,7 @@ export function SubCategoryForm({
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
-        form.setValue('image', file);
+        // form.setValue('image', file);
       };
       reader.readAsDataURL(file);
     }
@@ -89,7 +90,7 @@ export function SubCategoryForm({
 
   const handleRemoveImage = () => {
     setImagePreview(null);
-    form.setValue('image', undefined);
+    form.setValue('image', '');
   };
 
   return (
@@ -115,10 +116,7 @@ export function SubCategoryForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <Select 
-                onValueChange={field.onChange} 
-                defaultValue={field.value}
-              >
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder='Select a category' />
@@ -144,10 +142,10 @@ export function SubCategoryForm({
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea 
-                  placeholder='Enter sub category description' 
-                  {...field} 
-                  rows={2} 
+                <Textarea
+                  placeholder='Enter sub category description'
+                  {...field}
+                  rows={2}
                 />
               </FormControl>
               <FormMessage />
@@ -163,25 +161,29 @@ export function SubCategoryForm({
               <FormLabel className='font-semibold'>Status</FormLabel>
               <div className='flex items-center space-x-4'>
                 <p className='text-sm text-gray-500'>
-                  {field.value === 'active' ? 'Sub Category is active' : 'Sub Category is inactive'}
+                  {field.value === 'active'
+                    ? 'Sub Category is active'
+                    : 'Sub Category is inactive'}
                 </p>
                 <FormControl>
                   <div className='relative'>
-                    <div 
+                    <div
                       className={`w-10 h-6 rounded-full transition-colors ${
-                        field.value === 'active' 
-                          ? 'bg-green-500' 
+                        field.value === 'active'
+                          ? 'bg-green-500'
                           : 'bg-gray-300'
                       }`}
                     />
                     <button
                       type='button'
-                      onClick={() => field.onChange(
-                        field.value === 'active' ? 'inactive' : 'active'
-                      )}
+                      onClick={() =>
+                        field.onChange(
+                          field.value === 'active' ? 'inactive' : 'active'
+                        )
+                      }
                       className={`absolute top-0 left-0 w-6 h-6 rounded-full bg-white shadow-md transform transition-transform ${
-                        field.value === 'active' 
-                          ? 'translate-x-4' 
+                        field.value === 'active'
+                          ? 'translate-x-4'
                           : 'translate-x-0'
                       }`}
                     />
@@ -193,34 +195,53 @@ export function SubCategoryForm({
           )}
         />
 
+        <FormField
+          control={form.control}
+          name='displayOrder'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className='font-semibold'>Display Order</FormLabel>
+              <FormControl>
+                <Input
+                  type='number'
+                  placeholder='Enter display order'
+                  {...field}
+                  className='bg-white border-gray-300 focus:border-primary focus:ring-primary'
+                />
+              </FormControl>
+              <FormMessage className='text-red-500 text-sm' />
+            </FormItem>
+          )}
+        />
+
         <div className='space-y-2'>
           <FormLabel className='font-semibold'>Image</FormLabel>
           <div className='flex items-center space-x-4'>
-            <Input 
-              type='file' 
+            <Input
+              type='file'
               id='sub-category-image'
               accept='image/*'
               onChange={handleImageChange}
               className='hidden'
             />
-            <label 
-              htmlFor='sub-category-image' 
+            <label
+              htmlFor='sub-category-image'
               className='cursor-pointer flex items-center space-x-2 p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors'
             >
               <ImagePlus className='h-5 w-5 text-primary' />
               <span className='text-gray-700'>Upload Image</span>
             </label>
-            
+
             {imagePreview && (
               <div className='relative h-20 w-20 group'>
-                <Image 
-                  src={imagePreview} 
-                  alt='Sub Category Preview' 
+                <Image
+                  src={imagePreview}
+                  alt='Sub Category Preview'
                   fill
                   className='object-cover rounded-md shadow-sm'
                   sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
                 />
-                <button 
+                <button
                   type='button'
                   onClick={handleRemoveImage}
                   className='absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600'

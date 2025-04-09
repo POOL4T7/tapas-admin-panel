@@ -1,9 +1,10 @@
 export type Product = {
-  id?: string;
+  id: string;
   name: string;
   subCategoryId: string;
   description?: string;
   price: number;
   status: 'active' | 'inactive';
-  image?: string;
+  image?: File | string;
+  displayOrder: number;
 };

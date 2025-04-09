@@ -34,7 +34,11 @@ const productSchema = z.object({
   description: z.string().optional(),
   price: z.coerce.number().min(0, { message: 'Price must be non-negative' }),
   status: z.enum(['active', 'inactive']),
-  image: z.string().optional(),
+  image: z.union([
+    z.instanceof(File).optional(), 
+    z.string().optional()
+  ]),
+  displayOrder: z.coerce.number().min(0, { message: 'Display order must be non-negative' }),
 });
 
 interface ProductFormProps {
@@ -62,6 +66,7 @@ export function ProductForm({
       price: initialData?.price || 0,
       status: initialData?.status || 'active',
       image: initialData?.image,
+      displayOrder: initialData?.displayOrder || 0,
     },
   });
 
@@ -169,6 +174,25 @@ export function ProductForm({
                   type='number'
                   placeholder='Enter product price'
                   {...field}
+                  className='bg-white border-gray-300 focus:border-primary focus:ring-primary'
+                />
+              </FormControl>
+              <FormMessage className='text-red-500 text-sm' />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name='displayOrder'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className='font-semibold'>Display Order</FormLabel>
+              <FormControl>
+                <Input 
+                  type='number' 
+                  placeholder='Enter display order' 
+                  {...field} 
                   className='bg-white border-gray-300 focus:border-primary focus:ring-primary'
                 />
               </FormControl>

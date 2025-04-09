@@ -1,8 +1,9 @@
 export type SubCategory = {
-  id?: string;
+  id: string;
   name: string;
   categoryId: string;
   description?: string;
   status: 'active' | 'inactive';
-  image?: File | string;
-}
+  image?: string;
+  displayOrder: number;
+};

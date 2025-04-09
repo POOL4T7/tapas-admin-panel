@@ -17,7 +17,13 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
 import { Category } from '@/types/category';
@@ -28,24 +34,27 @@ const categorySchema = z.object({
   menuId: z.string({ required_error: 'Please select a menu' }),
   description: z.string().optional(),
   status: z.enum(['active', 'inactive']),
-  image: z.instanceof(File).optional(),
+  image: z.string().optional(),
+  displayOrder: z.coerce
+    .number()
+    .min(0, { message: 'Display order must be non-negative' }),
 });
 
 interface CategoryFormProps {
   menus: Menu[];
-  initialData?: Category & { imagePreview?: string };
-  onSubmit: (data: Category & { image?: File }) => void;
+  initialData?: Category;
+  onSubmit: (data: Category) => void;
   onCancel?: () => void;
 }
 
-export function CategoryForm({ 
-  menus, 
-  initialData, 
-  onSubmit, 
-  onCancel 
+export function CategoryForm({
+  menus,
+  initialData,
+  onSubmit,
+  onCancel,
 }: CategoryFormProps) {
   const [imagePreview, setImagePreview] = useState<string | undefined>(
-    initialData?.imagePreview
+    initialData?.image
   );
 
   const form = useForm<z.infer<typeof categorySchema>>({
@@ -55,6 +64,8 @@ export function CategoryForm({
       menuId: initialData?.menuId || '',
       description: initialData?.description || '',
       status: initialData?.status || 'active',
+      image: initialData?.image,
+      displayOrder: initialData?.displayOrder || 0,
     },
   });
 
@@ -67,9 +78,9 @@ export function CategoryForm({
         setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
-      
+
       // Set file in form
-      form.setValue('image', file);
+      // form.setValue('image', file);
     }
   };
 
@@ -78,7 +89,9 @@ export function CategoryForm({
     form.setValue('image', undefined);
     // Reset file input
     if (form.getValues('image')) {
-      const fileInput = document.getElementById('category-image') as HTMLInputElement;
+      const fileInput = document.getElementById(
+        'category-image'
+      ) as HTMLInputElement;
       if (fileInput) fileInput.value = '';
     }
   };
@@ -101,10 +114,7 @@ export function CategoryForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel className='font-semibold'>Menu</FormLabel>
-              <Select 
-                onValueChange={field.onChange} 
-                defaultValue={field.value}
-              >
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger className='bg-white border-gray-300 focus:border-primary focus:ring-primary'>
                     <SelectValue placeholder='Select a menu' />
@@ -112,10 +122,7 @@ export function CategoryForm({
                 </FormControl>
                 <SelectContent>
                   {menus.map((menu) => (
-                    <SelectItem 
-                      key={menu.id} 
-                      value={menu.id || 'default'}
-                    >
+                    <SelectItem key={menu.id} value={menu.id || 'default'}>
                       {menu.name}
                     </SelectItem>
                   ))}
@@ -133,9 +140,9 @@ export function CategoryForm({
             <FormItem>
               <FormLabel className='font-semibold'>Category Name</FormLabel>
               <FormControl>
-                <Input 
-                  placeholder='Enter category name' 
-                  {...field} 
+                <Input
+                  placeholder='Enter category name'
+                  {...field}
                   className='bg-white border-gray-300 focus:border-primary focus:ring-primary'
                 />
               </FormControl>
@@ -151,11 +158,30 @@ export function CategoryForm({
             <FormItem>
               <FormLabel className='font-semibold'>Description</FormLabel>
               <FormControl>
-                <Textarea 
-                  placeholder='Enter category description' 
-                  {...field} 
+                <Textarea
+                  placeholder='Enter category description'
+                  {...field}
                   rows={3}
                   className='bg-white border-gray-300 focus:border-primary focus:ring-primary resize-none'
+                />
+              </FormControl>
+              <FormMessage className='text-red-500 text-sm' />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name='displayOrder'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className='font-semibold'>Display Order</FormLabel>
+              <FormControl>
+                <Input
+                  type='number'
+                  placeholder='Enter display order'
+                  {...field}
+                  className='bg-white border-gray-300 focus:border-primary focus:ring-primary'
                 />
               </FormControl>
               <FormMessage className='text-red-500 text-sm' />
@@ -171,25 +197,29 @@ export function CategoryForm({
               <FormLabel className='font-semibold'>Status</FormLabel>
               <div className='flex items-center space-x-4'>
                 <p className='text-sm text-gray-500'>
-                  {field.value === 'active' ? 'Category is active' : 'Category is inactive'}
+                  {field.value === 'active'
+                    ? 'Category is active'
+                    : 'Category is inactive'}
                 </p>
                 <FormControl>
                   <div className='relative'>
-                    <div 
+                    <div
                       className={`w-10 h-6 rounded-full transition-colors ${
-                        field.value === 'active' 
-                          ? 'bg-green-500' 
+                        field.value === 'active'
+                          ? 'bg-green-500'
                           : 'bg-gray-300'
                       }`}
                     />
                     <button
                       type='button'
-                      onClick={() => field.onChange(
-                        field.value === 'active' ? 'inactive' : 'active'
-                      )}
+                      onClick={() =>
+                        field.onChange(
+                          field.value === 'active' ? 'inactive' : 'active'
+                        )
+                      }
                       className={`absolute top-0 left-0 w-6 h-6 rounded-full bg-white shadow-md transform transition-transform ${
-                        field.value === 'active' 
-                          ? 'translate-x-4' 
+                        field.value === 'active'
+                          ? 'translate-x-4'
                           : 'translate-x-0'
                       }`}
                     />
@@ -204,31 +234,31 @@ export function CategoryForm({
         <div className='space-y-2'>
           <FormLabel className='font-semibold'>Image</FormLabel>
           <div className='flex items-center space-x-4'>
-            <Input 
-              type='file' 
+            <Input
+              type='file'
               id='category-image'
               accept='image/*'
               onChange={handleImageChange}
               className='hidden'
             />
-            <label 
-              htmlFor='category-image' 
+            <label
+              htmlFor='category-image'
               className='cursor-pointer flex items-center space-x-2 p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors'
             >
               <ImagePlus className='h-5 w-5 text-primary' />
               <span className='text-gray-700'>Upload Image</span>
             </label>
-            
+
             {imagePreview && (
               <div className='relative h-20 w-20 group'>
-                <Image 
-                  src={imagePreview} 
-                  alt='Category Preview' 
+                <Image
+                  src={imagePreview}
+                  alt='Category Preview'
                   fill
                   className='object-cover rounded-md shadow-sm'
                   sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
                 />
-                <button 
+                <button
                   type='button'
                   onClick={handleRemoveImage}
                   className='absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600'
@@ -242,8 +272,8 @@ export function CategoryForm({
 
         <div className='flex justify-end space-x-2'>
           {onCancel && (
-            <Button 
-              type='button' 
+            <Button
+              type='button'
               variant='outline'
               onClick={onCancel}
               className='hover:bg-gray-100'
@@ -251,8 +281,8 @@ export function CategoryForm({
               Cancel
             </Button>
           )}
-          <Button 
-            type='submit' 
+          <Button
+            type='submit'
             className='bg-primary hover:bg-primary-dark transition-colors'
           >
             {initialData ? 'Update' : 'Create'}

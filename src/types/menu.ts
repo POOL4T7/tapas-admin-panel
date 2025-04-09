@@ -1,6 +1,7 @@
 export type Menu = {
-  id?: string;
+  id: string;
   name: string;
   description: string;
   status: 'active' | 'inactive';
+  displayOrder: number;
 }

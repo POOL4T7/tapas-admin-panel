@@ -46,7 +46,9 @@ export default function MenusPage() {
 
   const handleEditMenu = (updatedMenu: Menu) => {
     setMenus(
-      menus.map((menu) => (menu.id === updatedMenu.id ? updatedMenu : menu))
+      menus.map((menu) =>
+        menu.id === updatedMenu.id ? updatedMenu : menu
+      )
     );
     setIsDialogOpen(false);
     setEditingMenu(null);
