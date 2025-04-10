@@ -107,6 +107,7 @@ export default function MenusPage() {
         }}
         onDelete={handleDeleteMenu}
         onReorder={handleReorder}
+        onStatusToggle={() => {}}
       />
     </div>
   );
