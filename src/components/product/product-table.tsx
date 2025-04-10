@@ -66,11 +66,11 @@ export function ProductTable({
             const subCategory = subCategories.find(
               (sc) => sc.id === product.subCategoryId
             );
-            const category = subCategory 
-              ? categories.find((c) => c.id === subCategory.categoryId) 
+            const category = subCategory
+              ? categories.find((c) => c.id === subCategory.categoryId)
               : null;
-            const menu = category 
-              ? menus.find((m) => m.id === category.menuId) 
+            const menu = category
+              ? menus.find((m) => m.id === category.menuId)
               : null;
 
             return (
@@ -101,7 +101,7 @@ export function ProductTable({
                   </Tooltip>
                 </TableCell>
                 <TableCell>
-                  <div className='flex items-center justify-end gap-1'>
+                  <div className='flex items-center gap-1'>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button

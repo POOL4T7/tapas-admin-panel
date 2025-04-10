@@ -44,15 +44,21 @@ export function SubCategoryTable({
           headers={headers}
         >
           {subCategories.map((subCategory, index) => {
-            const category = categories.find((c) => c.id === subCategory.categoryId);
-            const menu = category ? menus.find((m) => m.id === category.menuId) : null;
-            
+            const category = categories.find(
+              (c) => c.id === subCategory.categoryId
+            );
+            const menu = category
+              ? menus.find((m) => m.id === category.menuId)
+              : null;
+
             return (
               <DraggableRow key={subCategory.id} id={subCategory.id}>
                 <TableCell className='text-center font-mono text-sm'>
                   {index + 1}
                 </TableCell>
-                <TableCell className='font-medium'>{subCategory.name}</TableCell>
+                <TableCell className='font-medium'>
+                  {subCategory.name}
+                </TableCell>
                 <TableCell>{menu?.name || 'Unassigned'}</TableCell>
                 <TableCell>
                   <div className='flex items-center gap-2'>
@@ -65,16 +71,20 @@ export function SubCategoryTable({
                     <TooltipTrigger>
                       <Switch
                         checked={subCategory.status === 'active'}
-                        onCheckedChange={(checked) => onStatusToggle(subCategory, checked)}
+                        onCheckedChange={(checked) =>
+                          onStatusToggle(subCategory, checked)
+                        }
                       />
                     </TooltipTrigger>
                     <TooltipContent>
-                      {subCategory.status === 'active' ? 'Deactivate' : 'Activate'}
+                      {subCategory.status === 'active'
+                        ? 'Deactivate'
+                        : 'Activate'}
                     </TooltipContent>
                   </Tooltip>
                 </TableCell>
                 <TableCell>
-                  <div className='flex items-center justify-end gap-1'>
+                  <div className='flex items-center gap-1'>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button

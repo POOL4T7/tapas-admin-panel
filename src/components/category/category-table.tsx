@@ -5,7 +5,6 @@ import { DraggableRow } from '@/components/ui/draggable-row';
 import { TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash, Menu as MenuIcon, Info } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
@@ -50,15 +49,7 @@ export function CategoryTable({
                   {index + 1}
                 </TableCell>
                 <TableCell className='font-medium'>{category.name}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant='outline'
-                    className='flex items-center gap-1 px-2 py-1'
-                  >
-                    <MenuIcon className='h-3 w-3' />
-                    {menu?.name || 'Unknown Menu'}
-                  </Badge>
-                </TableCell>
+                <TableCell>{menu?.name || 'Unknown Menu'}</TableCell>
                 <TableCell className='max-w-[300px]'>
                   {category.description ? (
                     <div className='flex items-center'>
@@ -102,7 +93,7 @@ export function CategoryTable({
                   </Tooltip>
                 </TableCell>
                 <TableCell>
-                  <div className='flex items-center justify-end gap-1'>
+                  <div className='flex items-center gap-1'>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
