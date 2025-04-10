@@ -4,7 +4,7 @@ import { DraggableRow } from '@/components/ui/draggable-row';
 import { TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash, MenuIcon, Info } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
@@ -17,6 +17,7 @@ interface MenuTableProps {
   onEdit: (menu: Menu) => void;
   onDelete: (menu: Menu) => void;
   onReorder: (oldIndex: number, newIndex: number) => void;
+  onStatusToggle: (menu: Menu, status: boolean) => void;
 }
 
 export function MenuTable({
@@ -24,19 +25,19 @@ export function MenuTable({
   onEdit,
   onDelete,
   onReorder,
+  onStatusToggle,
 }: MenuTableProps) {
-  const headers = ['Name', 'Description', 'Status', 'Order', 'Actions'];
+  const headers = ['S.No', 'Name', 'Description', 'Status', 'Actions'];
 
   return (
     <TooltipProvider>
       <div className='rounded-md shadow-sm'>
-        <DraggableTable
-          items={menus}
-          onReorder={onReorder}
-          headers={headers}
-        >
-          {menus.map((menu) => (
+        <DraggableTable items={menus} onReorder={onReorder} headers={headers}>
+          {menus.map((menu, index) => (
             <DraggableRow key={menu.id} id={menu.id}>
+              <TableCell className='text-center font-mono text-sm'>
+                {index + 1}
+              </TableCell>
               <TableCell className='font-medium'>{menu.name}</TableCell>
               <TableCell className='max-w-[300px]'>
                 {menu.description ? (
@@ -66,19 +67,19 @@ export function MenuTable({
                 )}
               </TableCell>
               <TableCell>
-                <Badge
-                  variant={menu.status === 'active' ? 'success' : 'secondary'}
-                  className={`w-fit px-2 py-1 ${
-                    menu.status === 'active'
-                      ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                  }`}
-                >
-                  {menu.status === 'active' ? 'Active' : 'Inactive'}
-                </Badge>
-              </TableCell>
-              <TableCell className='text-center font-mono text-sm'>
-                {menu.displayOrder}
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Switch
+                      checked={menu.status === 'active'}
+                      onCheckedChange={(checked) =>
+                        onStatusToggle(menu, checked)
+                      }
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {menu.status === 'active' ? 'Deactivate' : 'Activate'}
+                  </TooltipContent>
+                </Tooltip>
               </TableCell>
               <TableCell>
                 <div className='flex items-center justify-end gap-1'>

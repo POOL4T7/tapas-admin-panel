@@ -109,6 +109,15 @@ export default function MenusPage() {
         }}
         onDelete={handleDeleteMenu}
         onReorder={handleReorder}
+        onStatusToggle={(menu, isActive) => {
+          setMenus(
+            menus.map((m) =>
+              m.id === menu.id 
+                ? { ...m, status: isActive ? 'active' : 'inactive' } 
+                : m
+            )
+          );
+        }}
       />
     </div>
   );

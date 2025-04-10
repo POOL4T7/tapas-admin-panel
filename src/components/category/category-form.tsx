@@ -170,66 +170,67 @@ export function CategoryForm({
           )}
         />
 
-        <FormField
-          control={form.control}
-          name='displayOrder'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className='font-semibold'>Display Order</FormLabel>
-              <FormControl>
-                <Input
-                  type='number'
-                  placeholder='Enter display order'
-                  {...field}
-                  className='bg-white border-gray-300 focus:border-primary focus:ring-primary'
-                />
-              </FormControl>
-              <FormMessage className='text-red-500 text-sm' />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name='status'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className='font-semibold'>Status</FormLabel>
-              <div className='flex items-center space-x-4'>
-                <p className='text-sm text-gray-500'>
-                  {field.value === 'active'
-                    ? 'Category is active'
-                    : 'Category is inactive'}
-                </p>
+        <div className='grid grid-cols-2 gap-4 items-center'>
+          <FormField
+            control={form.control}
+            name='displayOrder'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Display Order</FormLabel>
                 <FormControl>
-                  <div className='relative'>
-                    <div
-                      className={`w-10 h-6 rounded-full transition-colors ${
-                        field.value === 'active'
-                          ? 'bg-green-500'
-                          : 'bg-gray-300'
-                      }`}
-                    />
-                    <button
-                      type='button'
-                      onClick={() =>
-                        field.onChange(
-                          field.value === 'active' ? 'inactive' : 'active'
-                        )
-                      }
-                      className={`absolute top-0 left-0 w-6 h-6 rounded-full bg-white shadow-md transform transition-transform ${
-                        field.value === 'active'
-                          ? 'translate-x-4'
-                          : 'translate-x-0'
-                      }`}
-                    />
-                  </div>
+                  <Input
+                    type='number'
+                    placeholder='Enter display order'
+                    {...field}
+                    className='bg-white'
+                  />
                 </FormControl>
-              </div>
-              <FormMessage className='text-red-500 text-sm' />
-            </FormItem>
-          )}
-        />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='status'
+            render={({ field }) => (
+              <FormItem>
+                <div className='flex flex-col space-y-2'>
+                  <FormLabel>Status</FormLabel>
+                  <div className='flex items-center gap-4'>
+                    <FormControl>
+                      <button
+                        type='button'
+                        onClick={() =>
+                          field.onChange(
+                            field.value === 'active' ? 'inactive' : 'active'
+                          )
+                        }
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                          field.value === 'active'
+                            ? 'bg-green-500'
+                            : 'bg-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform ${
+                            field.value === 'active'
+                              ? 'translate-x-6'
+                              : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </FormControl>
+                    <span className='text-sm font-medium'>
+                      {field.value === 'active' ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                  <FormMessage />
+                </div>
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className='space-y-2'>
           <FormLabel className='font-semibold'>Image</FormLabel>

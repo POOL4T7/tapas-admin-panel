@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -25,22 +25,25 @@ import {
 } from '@/components/ui/select';
 import { SubCategory } from '@/types/sub-category';
 import { Category } from '@/types/category';
+import { Menu } from '@/types/menu';
 import { ImagePlus, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 
 const subCategorySchema = z.object({
-  name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
+  menuId: z.string({ required_error: 'Please select a menu' }),
   categoryId: z.string({ required_error: 'Please select a category' }),
+  name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   description: z.string().optional(),
-  status: z.enum(['active', 'inactive']),
-  image: z.string().optional(),
   displayOrder: z.coerce
     .number()
     .min(0, { message: 'Display order must be non-negative' }),
+  status: z.enum(['active', 'inactive']),
+  image: z.string().optional(),
 });
 
 interface SubCategoryFormProps {
-  initialData?: SubCategory;
+  initialData?: SubCategory | null;
+  menus: Menu[];
   categories: Category[];
   onSubmit: (data: SubCategory) => void;
   onCancel?: () => void;
@@ -48,33 +51,42 @@ interface SubCategoryFormProps {
 
 export function SubCategoryForm({
   initialData,
+  menus,
   categories,
   onSubmit,
   onCancel,
 }: SubCategoryFormProps) {
+  const [selectedMenuId, setSelectedMenuId] = useState<string | null>(
+    initialData
+      ? categories.find((c) => c.id === initialData.categoryId)?.menuId || null
+      : null
+  );
+
   const [imagePreview, setImagePreview] = useState<string | null>(
     initialData?.image || null
   );
 
+  const filteredCategories = selectedMenuId
+    ? categories.filter((category) => category.menuId === selectedMenuId)
+    : [];
+
   const form = useForm<z.infer<typeof subCategorySchema>>({
     resolver: zodResolver(subCategorySchema),
     defaultValues: {
-      name: initialData?.name || '',
+      menuId: selectedMenuId || '',
       categoryId: initialData?.categoryId || '',
+      name: initialData?.name || '',
       description: initialData?.description || '',
+      displayOrder: initialData?.displayOrder || 0,
       status: initialData?.status || 'active',
       image: initialData?.image || '',
-      displayOrder: initialData?.displayOrder || 0,
     },
   });
 
-  const handleSubmit = (values: z.infer<typeof subCategorySchema>) => {
-    onSubmit({
-      ...values,
-      id: initialData?.id || '', // Preserve existing ID if editing
-      image: values.image,
-    });
-  };
+  // Automatically reset category if selected menu changes
+  useEffect(() => {
+    form.setValue('categoryId', '');
+  }, [selectedMenuId, form]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -82,7 +94,7 @@ export function SubCategoryForm({
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
-        // form.setValue('image', file);
+        form.setValue('image', reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -93,9 +105,78 @@ export function SubCategoryForm({
     form.setValue('image', '');
   };
 
+  const handleSubmit = (values: z.infer<typeof subCategorySchema>) => {
+    onSubmit({
+      ...values,
+      id: initialData?.id || '', // Preserve existing ID if editing
+    });
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4'>
+        <div className='grid grid-cols-2 gap-4'>
+          <FormField
+            control={form.control}
+            name='menuId'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Menu</FormLabel>
+                <Select
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    setSelectedMenuId(value);
+                  }}
+                  value={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select a menu' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {menus.map((menu) => (
+                      <SelectItem key={menu.id} value={menu.id || ''}>
+                        {menu.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='categoryId'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Category</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  disabled={!selectedMenuId}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select a category' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {filteredCategories.map((category) => (
+                      <SelectItem key={category.id} value={category.id || ''}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <FormField
           control={form.control}
           name='name'
@@ -103,33 +184,12 @@ export function SubCategoryForm({
             <FormItem>
               <FormLabel>Sub Category Name</FormLabel>
               <FormControl>
-                <Input placeholder='Enter sub category name' {...field} />
+                <Input
+                  placeholder='Enter sub category name'
+                  {...field}
+                  className='bg-white'
+                />
               </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name='categoryId'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder='Select a category' />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id || ''}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -145,74 +205,75 @@ export function SubCategoryForm({
                 <Textarea
                   placeholder='Enter sub category description'
                   {...field}
-                  rows={2}
+                  className='bg-white'
+                  rows={3}
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-
-        <FormField
-          control={form.control}
-          name='status'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className='font-semibold'>Status</FormLabel>
-              <div className='flex items-center space-x-4'>
-                <p className='text-sm text-gray-500'>
-                  {field.value === 'active'
-                    ? 'Sub Category is active'
-                    : 'Sub Category is inactive'}
-                </p>
+        <div className='grid grid-cols-2 gap-4 items-center'>
+          <FormField
+            control={form.control}
+            name='displayOrder'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Display Order</FormLabel>
                 <FormControl>
-                  <div className='relative'>
-                    <div
-                      className={`w-10 h-6 rounded-full transition-colors ${
-                        field.value === 'active'
-                          ? 'bg-green-500'
-                          : 'bg-gray-300'
-                      }`}
-                    />
-                    <button
-                      type='button'
-                      onClick={() =>
-                        field.onChange(
-                          field.value === 'active' ? 'inactive' : 'active'
-                        )
-                      }
-                      className={`absolute top-0 left-0 w-6 h-6 rounded-full bg-white shadow-md transform transition-transform ${
-                        field.value === 'active'
-                          ? 'translate-x-4'
-                          : 'translate-x-0'
-                      }`}
-                    />
-                  </div>
+                  <Input
+                    type='number'
+                    placeholder='Enter display order'
+                    {...field}
+                    className='bg-white'
+                  />
                 </FormControl>
-              </div>
-              <FormMessage className='text-red-500 text-sm' />
-            </FormItem>
-          )}
-        />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name='displayOrder'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className='font-semibold'>Display Order</FormLabel>
-              <FormControl>
-                <Input
-                  type='number'
-                  placeholder='Enter display order'
-                  {...field}
-                  className='bg-white border-gray-300 focus:border-primary focus:ring-primary'
-                />
-              </FormControl>
-              <FormMessage className='text-red-500 text-sm' />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name='status'
+            render={({ field }) => (
+              <FormItem>
+                <div className='flex flex-col space-y-2'>
+                  <FormLabel>Status</FormLabel>
+                  <div className='flex items-center gap-4'>
+                    <FormControl>
+                      <button
+                        type='button'
+                        onClick={() =>
+                          field.onChange(
+                            field.value === 'active' ? 'inactive' : 'active'
+                          )
+                        }
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                          field.value === 'active'
+                            ? 'bg-green-500'
+                            : 'bg-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform ${
+                            field.value === 'active'
+                              ? 'translate-x-6'
+                              : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </FormControl>
+                    <span className='text-sm font-medium'>
+                      {field.value === 'active' ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                  <FormMessage />
+                </div>
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className='space-y-2'>
           <FormLabel className='font-semibold'>Image</FormLabel>

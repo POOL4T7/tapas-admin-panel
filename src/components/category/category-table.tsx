@@ -6,6 +6,7 @@ import { TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash, Menu as MenuIcon, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
@@ -19,6 +20,7 @@ interface CategoryTableProps {
   onEdit: (category: Category) => void;
   onDelete: (category: Category) => void;
   onReorder: (oldIndex: number, newIndex: number) => void;
+  onStatusToggle: (category: Category, status: boolean) => void;
 }
 
 export function CategoryTable({
@@ -27,22 +29,26 @@ export function CategoryTable({
   onEdit,
   onDelete,
   onReorder,
+  onStatusToggle,
 }: CategoryTableProps) {
-  const headers = ['Name', 'Menu', 'Description', 'Status', 'Order', 'Actions'];
+  const headers = ['S.No', 'Name', 'Menu', 'Description', 'Status', 'Actions'];
 
   return (
     <TooltipProvider>
-      <div className='rounded-md  shadow-sm'>
+      <div className='rounded-md shadow-sm'>
         <DraggableTable
           items={categories}
           onReorder={onReorder}
           headers={headers}
         >
-          {categories.map((category) => {
+          {categories.map((category, index) => {
             const menu = menus.find((m) => m.id === category.menuId);
 
             return (
               <DraggableRow key={category.id} id={category.id}>
+                <TableCell className='text-center font-mono text-sm'>
+                  {index + 1}
+                </TableCell>
                 <TableCell className='font-medium'>{category.name}</TableCell>
                 <TableCell>
                   <Badge
@@ -81,21 +87,19 @@ export function CategoryTable({
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge
-                    variant={
-                      category.status === 'active' ? 'success' : 'secondary'
-                    }
-                    className={`w-fit px-2 py-1 ${
-                      category.status === 'active'
-                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                    }`}
-                  >
-                    {category.status === 'active' ? 'Active' : 'Inactive'}
-                  </Badge>
-                </TableCell>
-                <TableCell className='text-center font-mono text-sm'>
-                  {category.displayOrder}
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Switch
+                        checked={category.status === 'active'}
+                        onCheckedChange={(checked) =>
+                          onStatusToggle(category, checked)
+                        }
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {category.status === 'active' ? 'Deactivate' : 'Activate'}
+                    </TooltipContent>
+                  </Tooltip>
                 </TableCell>
                 <TableCell>
                   <div className='flex items-center justify-end gap-1'>

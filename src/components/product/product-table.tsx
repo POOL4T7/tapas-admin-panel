@@ -1,32 +1,51 @@
 import { Product } from '@/types/product';
+import { SubCategory } from '@/types/sub-category';
+import { Category } from '@/types/category';
+import { Menu } from '@/types/menu';
 import { DraggableTable } from '@/components/ui/draggable-table';
 import { DraggableRow } from '@/components/ui/draggable-row';
 import { TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash, Package, Info } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Edit, Trash, Package } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import Image from 'next/image';
 
 interface ProductTableProps {
   products: Product[];
+  subCategories: SubCategory[];
+  categories: Category[];
+  menus: Menu[];
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
   onReorder: (oldIndex: number, newIndex: number) => void;
+  onStatusToggle: (product: Product, status: boolean) => void;
 }
 
 export function ProductTable({
   products,
+  subCategories,
+  categories,
+  menus,
   onEdit,
   onDelete,
   onReorder,
+  onStatusToggle,
 }: ProductTableProps) {
-  const headers = ['Image', 'Name', 'Description', 'Price', 'Status', 'Order', 'Actions'];
+  const headers = [
+    'S.No',
+    'Name',
+    'Menu',
+    'Category',
+    'Sub Category',
+    'Price',
+    'Status',
+    'Actions',
+  ];
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -43,104 +62,78 @@ export function ProductTable({
           onReorder={onReorder}
           headers={headers}
         >
-          {products.map((product) => (
-            <DraggableRow key={product.id} id={product.id}>
-              <TableCell>
-                {product.image ? (
-                  <div className='relative h-10 w-10 rounded-md overflow-hidden'>
-                    <Image
-                      src={typeof product.image === 'string' ? product.image : URL.createObjectURL(product.image)}
-                      alt={product.name}
-                      width={40}
-                      height={40}
-                      className='object-cover'
-                    />
-                  </div>
-                ) : (
-                  <div className='h-10 w-10 rounded-md bg-slate-100 flex items-center justify-center'>
-                    <Package className='h-5 w-5 text-slate-400' />
-                  </div>
-                )}
-              </TableCell>
-              <TableCell className='font-medium'>{product.name}</TableCell>
-              <TableCell className='max-w-[300px]'>
-                {product.description ? (
-                  <div className='flex items-center'>
-                    <span className='truncate'>{product.description}</span>
-                    {product.description.length > 40 && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant='ghost'
-                            size='icon'
-                            className='h-6 w-6 ml-1'
-                          >
-                            <Info className='h-3 w-3' />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className='max-w-md'>
-                          {product.description}
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
-                  </div>
-                ) : (
-                  <span className='text-muted-foreground text-sm italic'>
-                    No description
-                  </span>
-                )}
-              </TableCell>
-              <TableCell className='font-mono'>
-                {formatPrice(product.price)}
-              </TableCell>
-              <TableCell>
-                <Badge
-                  variant={product.status === 'active' ? 'success' : 'secondary'}
-                  className={`w-fit px-2 py-1 ${
-                    product.status === 'active'
-                      ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                  }`}
-                >
-                  {product.status === 'active' ? 'Active' : 'Inactive'}
-                </Badge>
-              </TableCell>
-              <TableCell className='text-center font-mono text-sm'>
-                {product.displayOrder}
-              </TableCell>
-              <TableCell>
-                <div className='flex items-center justify-end gap-1'>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        onClick={() => onEdit(product)}
-                        className='h-8 w-8 rounded-full hover:bg-blue-50 hover:text-blue-600'
-                      >
-                        <Edit className='h-4 w-4' />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Edit Product</TooltipContent>
-                  </Tooltip>
+          {products.map((product, index) => {
+            const subCategory = subCategories.find(
+              (sc) => sc.id === product.subCategoryId
+            );
+            const category = subCategory 
+              ? categories.find((c) => c.id === subCategory.categoryId) 
+              : null;
+            const menu = category 
+              ? menus.find((m) => m.id === category.menuId) 
+              : null;
 
+            return (
+              <DraggableRow key={product.id} id={product.id}>
+                <TableCell className='text-center font-mono text-sm'>
+                  {index + 1}
+                </TableCell>
+                <TableCell className='font-medium'>{product.name}</TableCell>
+                <TableCell>{menu?.name || 'Unassigned'}</TableCell>
+                <TableCell>{category?.name || 'Unassigned'}</TableCell>
+                <TableCell>{subCategory?.name || 'Uncategorized'}</TableCell>
+                <TableCell className='font-mono'>
+                  {formatPrice(product.price)}
+                </TableCell>
+                <TableCell>
                   <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        onClick={() => onDelete(product)}
-                        className='h-8 w-8 rounded-full hover:bg-red-50 text-muted-foreground hover:text-red-600'
-                      >
-                        <Trash className='h-4 w-4' />
-                      </Button>
+                    <TooltipTrigger>
+                      <Switch
+                        checked={product.status === 'active'}
+                        onCheckedChange={(checked) =>
+                          onStatusToggle(product, checked)
+                        }
+                      />
                     </TooltipTrigger>
-                    <TooltipContent>Delete Product</TooltipContent>
+                    <TooltipContent>
+                      {product.status === 'active' ? 'Deactivate' : 'Activate'}
+                    </TooltipContent>
                   </Tooltip>
-                </div>
-              </TableCell>
-            </DraggableRow>
-          ))}
+                </TableCell>
+                <TableCell>
+                  <div className='flex items-center justify-end gap-1'>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          onClick={() => onEdit(product)}
+                          className='h-8 w-8 rounded-full hover:bg-blue-50 hover:text-blue-600'
+                        >
+                          <Edit className='h-4 w-4' />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Edit Product</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          onClick={() => onDelete(product)}
+                          className='h-8 w-8 rounded-full hover:bg-red-50 text-muted-foreground hover:text-red-600'
+                        >
+                          <Trash className='h-4 w-4' />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Delete Product</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </TableCell>
+              </DraggableRow>
+            );
+          })}
         </DraggableTable>
         {products.length === 0 && (
           <div className='flex flex-col items-center justify-center py-12 text-center'>

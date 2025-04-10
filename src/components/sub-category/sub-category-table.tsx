@@ -1,11 +1,12 @@
 import { SubCategory } from '@/types/sub-category';
 import { Category } from '@/types/category';
+import { Menu } from '@/types/menu';
 import { DraggableTable } from '@/components/ui/draggable-table';
 import { DraggableRow } from '@/components/ui/draggable-row';
 import { TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash, ListTree, Info } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Edit, Trash, Layers } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
@@ -16,19 +17,23 @@ import {
 interface SubCategoryTableProps {
   subCategories: SubCategory[];
   categories: Category[];
+  menus: Menu[];
   onEdit: (subCategory: SubCategory) => void;
   onDelete: (subCategory: SubCategory) => void;
   onReorder: (oldIndex: number, newIndex: number) => void;
+  onStatusToggle: (subCategory: SubCategory, status: boolean) => void;
 }
 
 export function SubCategoryTable({
   subCategories,
   categories,
+  menus,
   onEdit,
   onDelete,
   onReorder,
+  onStatusToggle,
 }: SubCategoryTableProps) {
-  const headers = ['Name', 'Category', 'Description', 'Status', 'Order', 'Actions'];
+  const headers = ['S.No', 'Name', 'Menu', 'Category', 'Status', 'Actions'];
 
   return (
     <TooltipProvider>
@@ -38,62 +43,35 @@ export function SubCategoryTable({
           onReorder={onReorder}
           headers={headers}
         >
-          {subCategories.map((subCategory) => {
+          {subCategories.map((subCategory, index) => {
             const category = categories.find((c) => c.id === subCategory.categoryId);
-
+            const menu = category ? menus.find((m) => m.id === category.menuId) : null;
+            
             return (
               <DraggableRow key={subCategory.id} id={subCategory.id}>
-                <TableCell className='font-medium'>{subCategory.name}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant='outline'
-                    className='flex items-center gap-1 px-2 py-1'
-                  >
-                    <ListTree className='h-3 w-3' />
-                    {category?.name || 'Unknown Category'}
-                  </Badge>
-                </TableCell>
-                <TableCell className='max-w-[300px]'>
-                  {subCategory.description ? (
-                    <div className='flex items-center'>
-                      <span className='truncate'>{subCategory.description}</span>
-                      {subCategory.description.length > 40 && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant='ghost'
-                              size='icon'
-                              className='h-6 w-6 ml-1'
-                            >
-                              <Info className='h-3 w-3' />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent className='max-w-md'>
-                            {subCategory.description}
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                    </div>
-                  ) : (
-                    <span className='text-muted-foreground text-sm italic'>
-                      No description
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={subCategory.status === 'active' ? 'success' : 'secondary'}
-                    className={`w-fit px-2 py-1 ${
-                      subCategory.status === 'active'
-                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                    }`}
-                  >
-                    {subCategory.status === 'active' ? 'Active' : 'Inactive'}
-                  </Badge>
-                </TableCell>
                 <TableCell className='text-center font-mono text-sm'>
-                  {subCategory.displayOrder}
+                  {index + 1}
+                </TableCell>
+                <TableCell className='font-medium'>{subCategory.name}</TableCell>
+                <TableCell>{menu?.name || 'Unassigned'}</TableCell>
+                <TableCell>
+                  <div className='flex items-center gap-2'>
+                    <Layers className='h-4 w-4 text-muted-foreground' />
+                    {category?.name || 'Uncategorized'}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Switch
+                        checked={subCategory.status === 'active'}
+                        onCheckedChange={(checked) => onStatusToggle(subCategory, checked)}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {subCategory.status === 'active' ? 'Deactivate' : 'Activate'}
+                    </TooltipContent>
+                  </Tooltip>
                 </TableCell>
                 <TableCell>
                   <div className='flex items-center justify-end gap-1'>
@@ -108,7 +86,7 @@ export function SubCategoryTable({
                           <Edit className='h-4 w-4' />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Edit Sub Category</TooltipContent>
+                      <TooltipContent>Edit Sub-Category</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>
@@ -122,7 +100,7 @@ export function SubCategoryTable({
                           <Trash className='h-4 w-4' />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Delete Sub Category</TooltipContent>
+                      <TooltipContent>Delete Sub-Category</TooltipContent>
                     </Tooltip>
                   </div>
                 </TableCell>
@@ -133,11 +111,11 @@ export function SubCategoryTable({
         {subCategories.length === 0 && (
           <div className='flex flex-col items-center justify-center py-12 text-center'>
             <div className='rounded-full bg-slate-100 p-3 mb-3'>
-              <ListTree className='h-6 w-6 text-slate-400' />
+              <Layers className='h-6 w-6 text-slate-400' />
             </div>
-            <h3 className='text-lg font-medium'>No sub categories found</h3>
+            <h3 className='text-lg font-medium'>No sub-categories found</h3>
             <p className='text-sm text-muted-foreground mt-1'>
-              Create a sub category to get started
+              Create a sub-category to get started
             </p>
           </div>
         )}

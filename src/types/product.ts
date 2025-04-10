@@ -7,4 +7,6 @@ export type Product = {
   status: 'active' | 'inactive';
   image?: File | string;
   displayOrder: number;
+  menuId: string;
+  categoryId: string;
 };
