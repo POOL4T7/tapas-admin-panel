@@ -60,68 +60,107 @@ export function MenuForm({ initialData, onSubmit, onCancel }: MenuFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4'>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4 sm:space-y-6'>
         <FormField
           control={form.control}
           name='name'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Menu Name</FormLabel>
+              <FormLabel className='font-semibold text-sm sm:text-base'>Menu Name</FormLabel>
               <FormControl>
-                <Input placeholder='Enter menu name' {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name='description'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder='Enter menu description'
-                  {...field}
-                  rows={2}
+                <Input 
+                  placeholder='Enter menu name' 
+                  {...field} 
+                  className='bg-white text-sm sm:text-base'
                 />
               </FormControl>
-              <FormMessage />
+              <FormMessage className='text-red-500 text-xs sm:text-sm' />
             </FormItem>
           )}
         />
 
-        <FormField
-          control={form.control}
-          name='status'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Status</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+        <div className='grid grid-cols-1 gap-4'>
+          <FormField
+            control={form.control}
+            name='description'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className='font-semibold text-sm sm:text-base'>Description</FormLabel>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder='Select menu status' />
-                  </SelectTrigger>
+                  <Textarea
+                    placeholder='Enter menu description'
+                    {...field}
+                    className='bg-white text-sm sm:text-base'
+                  />
                 </FormControl>
-                <SelectContent>
-                  <SelectItem value='active'>Active</SelectItem>
-                  <SelectItem value='inactive'>Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FormMessage className='text-red-500 text-xs sm:text-sm' />
+              </FormItem>
+            )}
+          />
+        </div>
 
-        <div className='flex justify-end space-x-2'>
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+          <FormField
+            control={form.control}
+            name='displayOrder'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className='font-semibold text-sm sm:text-base'>Display Order</FormLabel>
+                <FormControl>
+                  <Input
+                    type='number'
+                    placeholder='Enter display order'
+                    {...field}
+                    className='bg-white text-sm sm:text-base'
+                  />
+                </FormControl>
+                <FormMessage className='text-red-500 text-xs sm:text-sm' />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='status'
+            render={({ field }) => (
+              <FormItem>
+                <div className='flex flex-col space-y-2'>
+                  <FormLabel className='font-semibold text-sm sm:text-base'>Status</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className='w-full bg-white text-sm sm:text-base'>
+                        <SelectValue placeholder='Select menu status' />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value='active'>Active</SelectItem>
+                      <SelectItem value='inactive'>Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage className='text-red-500 text-xs sm:text-sm' />
+                </div>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className='flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2'>
           {onCancel && (
-            <Button type='button' variant='outline' onClick={onCancel}>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={onCancel}
+              className='w-full sm:w-auto hover:bg-gray-100 text-sm sm:text-base'
+            >
               Cancel
             </Button>
           )}
-          <Button type='submit'>Save Menu</Button>
+          <Button
+            type='submit'
+            className='w-full sm:w-auto bg-primary hover:bg-primary-dark transition-colors text-sm sm:text-base'
+          >
+            Save Menu
+          </Button>
         </div>
       </form>
     </Form>

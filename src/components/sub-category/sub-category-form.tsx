@@ -114,14 +114,14 @@ export function SubCategoryForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4'>
-        <div className='grid grid-cols-2 gap-4'>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4 sm:space-y-6'>
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
           <FormField
             control={form.control}
             name='menuId'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Menu</FormLabel>
+                <FormLabel className='font-semibold text-sm sm:text-base'>Menu</FormLabel>
                 <Select
                   onValueChange={(value) => {
                     field.onChange(value);
@@ -130,19 +130,19 @@ export function SubCategoryForm({
                   value={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className='w-full bg-white text-sm sm:text-base'>
                       <SelectValue placeholder='Select a menu' />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {menus.map((menu) => (
-                      <SelectItem key={menu.id} value={menu.id || ''}>
+                      <SelectItem key={menu.id} value={menu.id}>
                         {menu.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <FormMessage />
+                <FormMessage className='text-red-500 text-xs sm:text-sm' />
               </FormItem>
             )}
           />
@@ -152,94 +152,98 @@ export function SubCategoryForm({
             name='categoryId'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Category</FormLabel>
+                <FormLabel className='font-semibold text-sm sm:text-base'>Category</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   value={field.value}
                   disabled={!selectedMenuId}
                 >
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className='w-full bg-white text-sm sm:text-base'>
                       <SelectValue placeholder='Select a category' />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {filteredCategories.map((category) => (
-                      <SelectItem key={category.id} value={category.id || ''}>
+                      <SelectItem key={category.id} value={category.id}>
                         {category.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <FormMessage />
+                <FormMessage className='text-red-500 text-xs sm:text-sm' />
               </FormItem>
             )}
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name='name'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Sub Category Name</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder='Enter sub category name'
-                  {...field}
-                  className='bg-white'
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+          <FormField
+            control={form.control}
+            name='name'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className='font-semibold text-sm sm:text-base'>Sub Category Name</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder='Enter sub category name'
+                    {...field}
+                    className='bg-white text-sm sm:text-base'
+                  />
+                </FormControl>
+                <FormMessage className='text-red-500 text-xs sm:text-sm' />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name='description'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder='Enter sub category description'
-                  {...field}
-                  className='bg-white'
-                  rows={3}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className='grid grid-cols-2 gap-4 items-center'>
           <FormField
             control={form.control}
             name='displayOrder'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Display Order</FormLabel>
+                <FormLabel className='font-semibold text-sm sm:text-base'>Display Order</FormLabel>
                 <FormControl>
                   <Input
                     type='number'
                     placeholder='Enter display order'
                     {...field}
-                    className='bg-white'
+                    className='bg-white text-sm sm:text-base'
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className='text-red-500 text-xs sm:text-sm' />
               </FormItem>
             )}
           />
+        </div>
 
+        <div className='grid grid-cols-1 gap-4'>
+          <FormField
+            control={form.control}
+            name='description'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className='font-semibold text-sm sm:text-base'>Description</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder='Enter sub category description (optional)'
+                    {...field}
+                    className='bg-white text-sm sm:text-base'
+                  />
+                </FormControl>
+                <FormMessage className='text-red-500 text-xs sm:text-sm' />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 items-center'>
           <FormField
             control={form.control}
             name='status'
             render={({ field }) => (
               <FormItem>
                 <div className='flex flex-col space-y-2'>
-                  <FormLabel>Status</FormLabel>
+                  <FormLabel className='font-semibold text-sm sm:text-base'>Status</FormLabel>
                   <div className='flex items-center gap-4'>
                     <FormControl>
                       <button
@@ -268,59 +272,69 @@ export function SubCategoryForm({
                       {field.value === 'active' ? 'Active' : 'Inactive'}
                     </span>
                   </div>
-                  <FormMessage />
+                  <FormMessage className='text-red-500 text-xs sm:text-sm' />
                 </div>
               </FormItem>
             )}
           />
-        </div>
 
-        <div className='space-y-2'>
-          <FormLabel className='font-semibold'>Image</FormLabel>
-          <div className='flex items-center space-x-4'>
-            <Input
-              type='file'
-              id='sub-category-image'
-              accept='image/*'
-              onChange={handleImageChange}
-              className='hidden'
-            />
-            <label
-              htmlFor='sub-category-image'
-              className='cursor-pointer flex items-center space-x-2 p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors'
-            >
-              <ImagePlus className='h-5 w-5 text-primary' />
-              <span className='text-gray-700'>Upload Image</span>
-            </label>
+          <div className='space-y-2'>
+            <FormLabel className='font-semibold text-sm sm:text-base'>Image</FormLabel>
+            <div className='flex items-center space-x-4'>
+              <Input
+                type='file'
+                id='sub-category-image'
+                accept='image/*'
+                onChange={handleImageChange}
+                className='hidden'
+              />
+              <label
+                htmlFor='sub-category-image'
+                className='cursor-pointer flex items-center space-x-2 p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors text-sm sm:text-base'
+              >
+                <ImagePlus className='h-4 w-4 sm:h-5 sm:w-5 text-primary' />
+                <span className='text-gray-700'>Upload Image</span>
+              </label>
 
-            {imagePreview && (
-              <div className='relative h-20 w-20 group'>
-                <Image
-                  src={imagePreview}
-                  alt='Sub Category Preview'
-                  fill
-                  className='object-cover rounded-md shadow-sm'
-                  sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
-                />
-                <button
-                  type='button'
-                  onClick={handleRemoveImage}
-                  className='absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600'
-                >
-                  <Trash2 className='h-4 w-4' />
-                </button>
-              </div>
-            )}
+              {imagePreview && (
+                <div className='relative h-16 w-16 sm:h-20 sm:w-20 group'>
+                  <Image
+                    src={imagePreview}
+                    alt='Sub Category Preview'
+                    fill
+                    className='object-cover rounded-md shadow-sm'
+                    sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
+                  />
+                  <button
+                    type='button'
+                    onClick={handleRemoveImage}
+                    className='absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600'
+                  >
+                    <Trash2 className='h-3 w-3 sm:h-4 sm:w-4' />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className='flex justify-end space-x-2'>
+        <div className='flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2'>
           {onCancel && (
-            <Button type='button' variant='outline' onClick={onCancel}>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={onCancel}
+              className='w-full sm:w-auto hover:bg-gray-100 text-sm sm:text-base'
+            >
               Cancel
             </Button>
           )}
-          <Button type='submit'>Save Sub Category</Button>
+          <Button
+            type='submit'
+            className='w-full sm:w-auto bg-primary hover:bg-primary-dark transition-colors text-sm sm:text-base'
+          >
+            Save Sub Category
+          </Button>
         </div>
       </form>
     </Form>

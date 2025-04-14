@@ -123,16 +123,16 @@ export default function SubCategoriesPage() {
   };
 
   return (
-    <div className='p-6'>
-      <div className='flex items-center justify-between mb-6'>
-        <div>
-          <h1 className='text-2xl font-semibold'>Sub Categories</h1>
-          <p className='text-muted-foreground mt-1'>
+    <div className='p-4 sm:p-6 md:p-8 w-full max-w-7xl mx-auto'>
+      <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 space-y-4 sm:space-y-0 sm:space-x-4'>
+        <div className='text-center sm:text-left'>
+          <h1 className='text-xl sm:text-2xl font-semibold'>Sub Categories</h1>
+          <p className='text-sm text-muted-foreground'>
             Manage your menu sub categories
           </p>
         </div>
 
-        <div className='flex items-center space-x-4'>
+        <div className='flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto'>
           <Select
             value={selectedMenuId || ''}
             onValueChange={(value) => {
@@ -140,7 +140,7 @@ export default function SubCategoriesPage() {
               setSelectedCategoryId(null); // Reset category filter when menu changes
             }}
           >
-            <SelectTrigger className='w-[180px]'>
+            <SelectTrigger className='w-full sm:w-[180px]'>
               <SelectValue placeholder='Filter by Menu' />
             </SelectTrigger>
             <SelectContent align='end'>
@@ -160,7 +160,7 @@ export default function SubCategoriesPage() {
             }
             disabled={!selectedMenuId}
           >
-            <SelectTrigger className='w-[180px]'>
+            <SelectTrigger className='w-full sm:w-[180px]'>
               <SelectValue placeholder='Filter by Category' />
             </SelectTrigger>
             <SelectContent align='end'>
@@ -175,9 +175,9 @@ export default function SubCategoriesPage() {
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>Add Sub Category</Button>
+              <Button className='w-full sm:w-auto'>Add Sub Category</Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className='w-[90%] max-w-md max-h-[90vh] overflow-y-auto'>
               <DialogHeader>
                 <DialogTitle>
                   {editingSubCategory ? 'Edit' : 'Add'} Sub Category

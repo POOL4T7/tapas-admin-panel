@@ -107,85 +107,88 @@ export function CategoryForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-        <FormField
-          control={form.control}
-          name='menuId'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className='font-semibold'>Menu</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4 sm:space-y-6'>
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+          <FormField
+            control={form.control}
+            name='menuId'
+            render={({ field }) => (
+              <FormItem className='w-full'>
+                <FormLabel className='font-semibold text-sm sm:text-base'>Menu</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger className='w-full bg-white border-gray-300 focus:border-primary focus:ring-primary text-sm sm:text-base'>
+                      <SelectValue placeholder='Select a menu' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {menus.map((menu) => (
+                      <SelectItem key={menu.id} value={menu.id || 'default'}>
+                        {menu.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage className='text-red-500 text-xs sm:text-sm' />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='name'
+            render={({ field }) => (
+              <FormItem className='w-full'>
+                <FormLabel className='font-semibold text-sm sm:text-base'>Name</FormLabel>
                 <FormControl>
-                  <SelectTrigger className='bg-white border-gray-300 focus:border-primary focus:ring-primary'>
-                    <SelectValue placeholder='Select a menu' />
-                  </SelectTrigger>
+                  <Input
+                    placeholder='Enter category name'
+                    {...field}
+                    className='w-full bg-white text-sm sm:text-base'
+                  />
                 </FormControl>
-                <SelectContent>
-                  {menus.map((menu) => (
-                    <SelectItem key={menu.id} value={menu.id || 'default'}>
-                      {menu.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage className='text-red-500 text-sm' />
-            </FormItem>
-          )}
-        />
+                <FormMessage className='text-red-500 text-xs sm:text-sm' />
+              </FormItem>
+            )}
+          />
+        </div>
 
-        <FormField
-          control={form.control}
-          name='name'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className='font-semibold'>Category Name</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder='Enter category name'
-                  {...field}
-                  className='bg-white border-gray-300 focus:border-primary focus:ring-primary'
-                />
-              </FormControl>
-              <FormMessage className='text-red-500 text-sm' />
-            </FormItem>
-          )}
-        />
+        <div className='grid grid-cols-1 gap-4'>
+          <FormField
+            control={form.control}
+            name='description'
+            render={({ field }) => (
+              <FormItem className='w-full'>
+                <FormLabel className='font-semibold text-sm sm:text-base'>Description</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder='Enter description (optional)'
+                    {...field}
+                    className='w-full bg-white text-sm sm:text-base'
+                  />
+                </FormControl>
+                <FormMessage className='text-red-500 text-xs sm:text-sm' />
+              </FormItem>
+            )}
+          />
+        </div>
 
-        <FormField
-          control={form.control}
-          name='description'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className='font-semibold'>Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder='Enter category description'
-                  {...field}
-                  rows={3}
-                  className='bg-white border-gray-300 focus:border-primary focus:ring-primary resize-none'
-                />
-              </FormControl>
-              <FormMessage className='text-red-500 text-sm' />
-            </FormItem>
-          )}
-        />
-
-        <div className='grid grid-cols-2 gap-4 items-center'>
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
           <FormField
             control={form.control}
             name='displayOrder'
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Display Order</FormLabel>
+              <FormItem className='w-full'>
+                <FormLabel className='font-semibold text-sm sm:text-base'>Display Order</FormLabel>
                 <FormControl>
                   <Input
                     type='number'
                     placeholder='Enter display order'
                     {...field}
-                    className='bg-white'
+                    className='w-full bg-white text-sm sm:text-base'
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className='text-red-500 text-xs sm:text-sm' />
               </FormItem>
             )}
           />
@@ -196,7 +199,7 @@ export function CategoryForm({
             render={({ field }) => (
               <FormItem>
                 <div className='flex flex-col space-y-2'>
-                  <FormLabel>Status</FormLabel>
+                  <FormLabel className='font-semibold text-sm sm:text-base'>Status</FormLabel>
                   <div className='flex items-center gap-4'>
                     <FormControl>
                       <button
@@ -225,66 +228,68 @@ export function CategoryForm({
                       {field.value === 'active' ? 'Active' : 'Inactive'}
                     </span>
                   </div>
-                  <FormMessage />
+                  <FormMessage className='text-red-500 text-xs sm:text-sm' />
                 </div>
               </FormItem>
             )}
           />
         </div>
 
-        <div className='space-y-2'>
-          <FormLabel className='font-semibold'>Image</FormLabel>
-          <div className='flex items-center space-x-4'>
-            <Input
-              type='file'
-              id='category-image'
-              accept='image/*'
-              onChange={handleImageChange}
-              className='hidden'
-            />
-            <label
-              htmlFor='category-image'
-              className='cursor-pointer flex items-center space-x-2 p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors'
-            >
-              <ImagePlus className='h-5 w-5 text-primary' />
-              <span className='text-gray-700'>Upload Image</span>
-            </label>
+        <div className='grid grid-cols-1 gap-4'>
+          <div className='space-y-2'>
+            <FormLabel className='font-semibold text-sm sm:text-base'>Image</FormLabel>
+            <div className='flex items-center space-x-4'>
+              <Input
+                type='file'
+                id='category-image'
+                accept='image/*'
+                onChange={handleImageChange}
+                className='hidden'
+              />
+              <label
+                htmlFor='category-image'
+                className='cursor-pointer flex items-center space-x-2 p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors text-sm sm:text-base'
+              >
+                <ImagePlus className='h-4 w-4 sm:h-5 sm:w-5 text-primary' />
+                <span className='text-gray-700'>Upload Image</span>
+              </label>
 
-            {imagePreview && (
-              <div className='relative h-20 w-20 group'>
-                <Image
-                  src={imagePreview}
-                  alt='Category Preview'
-                  fill
-                  className='object-cover rounded-md shadow-sm'
-                  sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
-                />
-                <button
-                  type='button'
-                  onClick={handleRemoveImage}
-                  className='absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600'
-                >
-                  <Trash2 className='h-4 w-4' />
-                </button>
-              </div>
-            )}
+              {imagePreview && (
+                <div className='relative h-16 w-16 sm:h-20 sm:w-20 group'>
+                  <Image
+                    src={imagePreview}
+                    alt='Category Preview'
+                    fill
+                    className='object-cover rounded-md shadow-sm'
+                    sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
+                  />
+                  <button
+                    type='button'
+                    onClick={handleRemoveImage}
+                    className='absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600'
+                  >
+                    <Trash2 className='h-3 w-3 sm:h-4 sm:w-4' />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className='flex justify-end space-x-2'>
+        <div className='flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2'>
           {onCancel && (
             <Button
               type='button'
               variant='outline'
               onClick={onCancel}
-              className='hover:bg-gray-100'
+              className='w-full sm:w-auto hover:bg-gray-100 text-sm sm:text-base'
             >
               Cancel
             </Button>
           )}
           <Button
             type='submit'
-            className='bg-primary hover:bg-primary-dark transition-colors'
+            className='w-full sm:w-auto bg-primary hover:bg-primary-dark transition-colors text-sm sm:text-base'
           >
             {initialData ? 'Update' : 'Create'}
           </Button>

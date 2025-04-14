@@ -1,10 +1,13 @@
 'use client';
-
+import { useState } from 'react';
+import { useForm, useFieldArray, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Form,
   FormControl,
@@ -13,8 +16,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -22,269 +23,305 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { X, Plus } from 'lucide-react';
+
 import { Product } from '@/types/product';
-import { SubCategory } from '@/types/sub-category';
 import { Menu } from '@/types/menu';
 import { Category } from '@/types/category';
-import { useState, useEffect, useMemo } from 'react';
-import { ImagePlus, Trash2 } from 'lucide-react';
-import Image from 'next/image';
+import { SubCategory } from '@/types/sub-category';
+
+type ProductFormValues = {
+  name: string;
+  description?: string;
+  price: number;
+  displayOrder: number;
+  menuId: string;
+  categoryId: string;
+  subCategoryId: string;
+  status: 'active' | 'inactive';
+  tags?: string[];
+  ingredients?: string[];
+  images?: string[];
+  metadata?: string;
+};
 
 const productSchema = z.object({
-  menuId: z.string({ required_error: 'Please select a menu' }),
-  categoryId: z.string({ required_error: 'Please select a category' }),
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
-  subCategoryId: z.string({ required_error: 'Please select a sub category' }),
   description: z.string().optional(),
   price: z.coerce.number().min(0, { message: 'Price must be non-negative' }),
   displayOrder: z.coerce
     .number()
     .min(0, { message: 'Display order must be non-negative' }),
+  menuId: z.string({ required_error: 'Please select a menu' }),
+  categoryId: z.string({ required_error: 'Please select a category' }),
+  subCategoryId: z.string({ required_error: 'Please select a sub-category' }),
   status: z.enum(['active', 'inactive']),
-  image: z.union([z.instanceof(File).optional(), z.string().optional()]),
+  tags: z.array(z.string()).optional(),
+  ingredients: z.array(z.string()).optional(),
+  images: z.array(z.string()).optional(),
+  metadata: z.string().optional(),
 });
 
-interface ProductFormProps {
-  initialData?: Product;
+type ProductFormProps = {
   menus: Menu[];
   categories: Category[];
   subCategories: SubCategory[];
-  onSubmit: (data: Product) => void;
-  onCancel?: () => void;
-}
+  initialData?: Product;
+  onSubmit: (data: Omit<Product, 'id'>) => void;
+};
 
 export function ProductForm({
-  initialData,
   menus,
   categories,
   subCategories,
+  initialData,
   onSubmit,
-  onCancel,
 }: ProductFormProps) {
-  const [imagePreview, setImagePreview] = useState<string | null>();
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imageUrls, setImageUrls] = useState<string[]>(
+    initialData?.images || []
+  );
 
-  const form = useForm<z.infer<typeof productSchema>>({
+  const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      menuId: initialData?.menuId || '',
-      categoryId: initialData?.categoryId || '',
       name: initialData?.name || '',
-      subCategoryId: initialData?.subCategoryId || '',
       description: initialData?.description || '',
       price: initialData?.price || 0,
       displayOrder: initialData?.displayOrder || 0,
+      menuId: initialData?.menuId || '',
+      categoryId: initialData?.categoryId || '',
+      subCategoryId: initialData?.subCategoryId || '',
       status: initialData?.status || 'active',
-      image: initialData?.image,
+      tags: initialData?.tags || [],
+      ingredients: initialData?.ingredients || [],
+      images: initialData?.images || [],
+      metadata: initialData?.metadata || '',
     },
   });
 
-  // Memoized filtered categories based on selected menu
-  const filteredCategories = useMemo(() => {
-    const menuId = form.getValues('menuId');
-    return categories.filter((cat) => cat.menuId === menuId);
-  }, [form, categories]);
+  const {
+    fields: tagFields,
+    append: appendTag,
+    remove: removeTag,
+  } = useFieldArray({
+    control: form.control,
+    name: 'tags' as never,
+  });
 
-  // Memoized filtered subcategories based on selected category
-  const filteredSubCategories = useMemo(() => {
-    const categoryId = form.getValues('categoryId');
-    return subCategories.filter((sub) => sub.categoryId === categoryId);
-  }, [form, subCategories]);
+  const {
+    fields: ingredientFields,
+    append: appendIngredient,
+    remove: removeIngredient,
+  } = useFieldArray({
+    control: form.control,
+    name: 'ingredients' as never,
+  });
 
-  // Reset category and subcategory when menu changes
-  useEffect(() => {
-    const menuId = form.getValues('menuId');
-    if (menuId) {
-      form.setValue('categoryId', '');
-      form.setValue('subCategoryId', '');
-    }
-  }, [form]);
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
 
-  // Reset subcategory when category changes
-  useEffect(() => {
-    const categoryId = form.getValues('categoryId');
-    if (categoryId) {
-      form.setValue('subCategoryId', '');
-    }
-  }, [form]);
- 
-  const handleSubmit = (values: z.infer<typeof productSchema>) => {
-    onSubmit({
-      ...values,
-      id: initialData?.id || '', // Preserve existing ID if editing
-      description: values.description || '', // Ensure description is always a string
-      image: values.image, // Pass the uploaded file
-    });
+    const newImageFiles = Array.from(files);
+    console.log('Selected Files:', newImageFiles);
+
+    // Create local URLs for preview
+    const newImageUrls = newImageFiles.map((file) => URL.createObjectURL(file));
+
+    setImageFiles((prev) => [...prev, ...newImageFiles]);
+    setImageUrls((prev) => [...prev, ...newImageUrls]);
+    form.setValue('images', [...imageUrls, ...newImageUrls]);
+
+    // Cleanup object URLs to prevent memory leaks
+    return () => {
+      newImageUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  const handleRemoveImage = (indexToRemove: number) => {
+    const updatedFiles = imageFiles.filter(
+      (_, index) => index !== indexToRemove
+    );
+    const updatedUrls = imageUrls.filter((_, index) => index !== indexToRemove);
 
-      // Set file in form
-      form.setValue('image', file);
-    }
+    // Revoke the object URL for the removed image
+    URL.revokeObjectURL(imageUrls[indexToRemove]);
+
+    setImageFiles(updatedFiles);
+    setImageUrls(updatedUrls);
+    form.setValue('images', updatedUrls);
   };
 
-  const handleRemoveImage = () => {
-    setImagePreview(null);
-    form.setValue('image', undefined);
-    // Reset file input
-    if (form.getValues('image')) {
-      const fileInput = document.getElementById(
-        'product-image'
-      ) as HTMLInputElement;
-      if (fileInput) fileInput.value = '';
+  const handleSubmit: SubmitHandler<ProductFormValues> = (values) => {
+    // Validate required fields
+    if (!values.menuId || !values.categoryId || !values.subCategoryId) {
+      console.error('Missing required selection fields');
+      return;
     }
+
+    // Prepare data for submission
+    const submissionData = {
+      name: values.name.trim(),
+      description: values.description?.trim() || '',
+      price: Number(values.price),
+      displayOrder: Number(values.displayOrder || 0),
+      menuId: values.menuId,
+      categoryId: values.categoryId,
+      subCategoryId: values.subCategoryId,
+      status: values.status,
+      tags: values.tags?.filter((tag) => tag.trim() !== '') || [],
+      ingredients:
+        values.ingredients?.filter((ingredient) => ingredient.trim() !== '') ||
+        [],
+      images: imageUrls.filter((url) => url.trim() !== ''),
+      metadata: values.metadata?.trim() || undefined,
+    };
+
+    console.log('Submission Data:', submissionData);
+    console.log('Image Files:', imageFiles);
+
+    onSubmit(submissionData);
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-        <FormField
-          control={form.control}
-          name='menuId'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className='font-semibold'>Menu</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+          <FormField
+            control={form.control}
+            name='menuId'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Menu</FormLabel>
+                <Select
+                  value={field.value}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    form.resetField('categoryId');
+                    form.resetField('subCategoryId');
+                  }}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder='Select a menu' />
+                    <SelectValue placeholder='Select Menu' />
                   </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {menus.map((menu) => (
-                    <SelectItem key={menu.id} value={menu.id || ''}>
-                      {menu.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage className='text-red-500 text-sm' />
-            </FormItem>
-          )}
-        />
+                  <SelectContent>
+                    {menus.map((menu) => (
+                      <SelectItem key={menu.id} value={menu.id}>
+                        {menu.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name='categoryId'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className='font-semibold'>Category</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                value={field.value}
-                disabled={!form.getValues('menuId')}
-              >
-                <FormControl>
+          <FormField
+            control={form.control}
+            name='categoryId'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Category</FormLabel>
+                <Select
+                  value={field.value}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    form.resetField('subCategoryId');
+                  }}
+                  disabled={!form.getValues('menuId')}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder='Select a category' />
+                    <SelectValue placeholder='Select Category' />
                   </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {filteredCategories.map((category) => (
-                    <SelectItem key={category.id} value={category.id || ''}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage className='text-red-500 text-sm' />
-            </FormItem>
-          )}
-        />
+                  <SelectContent>
+                    {categories
+                      .filter((cat) => cat.menuId === form.getValues('menuId'))
+                      .map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name='subCategoryId'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className='font-semibold'>Sub Category</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                value={field.value}
-                disabled={!form.getValues('categoryId')}
-              >
-                <FormControl>
+          <FormField
+            control={form.control}
+            name='subCategoryId'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Sub Category</FormLabel>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={!form.getValues('categoryId')}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder='Select a sub category' />
+                    <SelectValue placeholder='Select Sub Category' />
                   </SelectTrigger>
+                  <SelectContent>
+                    {subCategories
+                      .filter(
+                        (sc) => sc.categoryId === form.getValues('categoryId')
+                      )
+                      .map((subCategory) => (
+                        <SelectItem key={subCategory.id} value={subCategory.id}>
+                          {subCategory.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <FormField
+            control={form.control}
+            name='name'
+            render={({ field }) => (
+              <FormItem className='md:col-span-2'>
+                <FormLabel>Product Name</FormLabel>
+                <FormControl>
+                  <Input placeholder='Enter product name' {...field} />
                 </FormControl>
-                <SelectContent>
-                  {filteredSubCategories.map((subCategory) => (
-                    <SelectItem
-                      key={subCategory.id}
-                      value={subCategory.id || ''}
-                    >
-                      {subCategory.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage className='text-red-500 text-sm' />
-            </FormItem>
-          )}
-        />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name='name'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className='font-semibold'>Product Name</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder='Enter product name'
-                  {...field}
-                  className='bg-white border-gray-300 focus:border-primary focus:ring-primary'
-                />
-              </FormControl>
-              <FormMessage className='text-red-500 text-sm' />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name='description'
+            render={({ field }) => (
+              <FormItem className='md:col-span-2'>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea placeholder='Product description' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-        <FormField
-          control={form.control}
-          name='description'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className='font-semibold'>Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder='Enter product description'
-                  {...field}
-                  rows={3}
-                  className='bg-white border-gray-300 focus:border-primary focus:ring-primary resize-none'
-                />
-              </FormControl>
-              <FormMessage className='text-red-500 text-sm' />
-            </FormItem>
-          )}
-        />
-
-        <div className='grid grid-cols-2 gap-4'>
+        <div className='grid grid-cols-2 md:grid-cols-3 gap-2'>
           <FormField
             control={form.control}
             name='price'
             render={({ field }) => (
               <FormItem>
-                <FormLabel className='font-semibold'>Price</FormLabel>
+                <FormLabel>Price</FormLabel>
                 <FormControl>
-                  <Input
-                    type='number'
-                    placeholder='Enter product price'
-                    {...field}
-                    className='bg-white border-gray-300 focus:border-primary focus:ring-primary'
-                  />
+                  <Input type='number' step='0.01' {...field} />
                 </FormControl>
-                <FormMessage className='text-red-500 text-sm' />
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -294,121 +331,148 @@ export function ProductForm({
             name='displayOrder'
             render={({ field }) => (
               <FormItem>
-                <FormLabel className='font-semibold'>Display Order</FormLabel>
+                <FormLabel>Display Order</FormLabel>
                 <FormControl>
-                  <Input
-                    type='number'
-                    placeholder='Enter display order'
-                    {...field}
-                    className='bg-white border-gray-300 focus:border-primary focus:ring-primary'
-                  />
+                  <Input type='number' {...field} />
                 </FormControl>
-                <FormMessage className='text-red-500 text-sm' />
+                <FormMessage />
               </FormItem>
             )}
           />
-        </div>
 
-        <div className='grid grid-cols-2 gap-4 items-center'>
           <FormField
             control={form.control}
             name='status'
             render={({ field }) => (
-              <FormItem>
-                <div className='flex flex-col space-y-2'>
-                  <FormLabel className='font-semibold'>Status</FormLabel>
-                  <div className='flex items-center gap-4'>
-                    <FormControl>
-                      <button
-                        type='button'
-                        onClick={() =>
-                          field.onChange(
-                            field.value === 'active' ? 'inactive' : 'active'
-                          )
-                        }
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                          field.value === 'active'
-                            ? 'bg-green-500'
-                            : 'bg-gray-300'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform ${
-                            field.value === 'active'
-                              ? 'translate-x-6'
-                              : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
-                    </FormControl>
-                    <span className='text-sm font-medium'>
-                      {field.value === 'active' ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                  <FormMessage className='text-red-500 text-sm' />
-                </div>
+              <FormItem className='flex flex-row items-center justify-between'>
+                <FormLabel>Status</FormLabel>
+                <FormControl>
+                  <Switch
+                    checked={field.value === 'active'}
+                    onCheckedChange={(checked) =>
+                      field.onChange(checked ? 'active' : 'inactive')
+                    }
+                  />
+                </FormControl>
               </FormItem>
             )}
           />
+        </div>
 
-          <div className='space-y-2'>
-            <FormLabel className='font-semibold'>Image</FormLabel>
-            <div className='flex items-center space-x-4'>
-              <Input
-                type='file'
-                id='product-image'
-                accept='image/*'
-                onChange={handleImageChange}
-                className='hidden'
-              />
-              <label
-                htmlFor='product-image'
-                className='cursor-pointer flex items-center space-x-2 p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors'
-              >
-                <ImagePlus className='h-5 w-5 text-primary' />
-                <span className='text-gray-700'>Upload Image</span>
-              </label>
-
-              {imagePreview && (
-                <div className='relative h-20 w-20 group'>
-                  <Image
-                    src={imagePreview}
-                    alt='Product Preview'
-                    fill
-                    className='object-cover rounded-md shadow-sm'
-                    sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
-                  />
-                  <button
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <div>
+            <FormLabel>Product Tags</FormLabel>
+            <div className='space-y-2'>
+              {tagFields.map((field, index) => (
+                <div key={field.id} className='flex items-center space-x-2'>
+                  <FormControl>
+                    <Input
+                      placeholder='Enter tag'
+                      {...form.register(`tags.${index}` as const)}
+                    />
+                  </FormControl>
+                  <Button
                     type='button'
-                    onClick={handleRemoveImage}
-                    className='absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600'
+                    variant='destructive'
+                    size='icon'
+                    onClick={() => removeTag(index)}
                   >
-                    <Trash2 className='h-4 w-4' />
-                  </button>
+                    <X className='h-4 w-4' />
+                  </Button>
                 </div>
-              )}
+              ))}
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => appendTag('')}
+                className='w-full'
+              >
+                <Plus className='mr-2 h-4 w-4' /> Add Tag
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <FormLabel>Ingredients</FormLabel>
+            <div className='space-y-2'>
+              {ingredientFields.map((field, index) => (
+                <div key={field.id} className='flex items-center space-x-2'>
+                  <FormControl>
+                    <Input
+                      placeholder='Enter ingredient'
+                      {...form.register(`ingredients.${index}` as const)}
+                    />
+                  </FormControl>
+                  <Button
+                    type='button'
+                    variant='destructive'
+                    size='icon'
+                    onClick={() => removeIngredient(index)}
+                  >
+                    <X className='h-4 w-4' />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => appendIngredient('')}
+                className='w-full'
+              >
+                <Plus className='mr-2 h-4 w-4' /> Add Ingredient
+              </Button>
             </div>
           </div>
         </div>
 
-        <div className='flex justify-end space-x-2'>
-          {onCancel && (
-            <Button
-              type='button'
-              variant='outline'
-              onClick={onCancel}
-              className='hover:bg-gray-100'
-            >
-              Cancel
-            </Button>
-          )}
-          <Button
-            type='submit'
-            className='bg-primary hover:bg-primary-dark transition-colors'
-          >
-            {initialData ? 'Update' : 'Create'}
-          </Button>
+        <div>
+          <FormLabel>Product Images</FormLabel>
+          <div className='space-y-2'>
+            <Input
+              type='file'
+              multiple
+              accept='image/*'
+              onChange={handleImageUpload}
+              className='w-full'
+            />
+            <div className='grid grid-cols-3 gap-2 mt-2'>
+              {imageUrls.map((url, index) => (
+                <div key={index} className='relative w-full h-24'>
+                  <Image
+                    src={url}
+                    alt={`Product image ${index + 1}`}
+                    fill
+                    className='object-cover rounded'
+                  />
+                  <Button
+                    type='button'
+                    variant='destructive'
+                    size='icon'
+                    className='absolute top-0 right-0 m-1'
+                    onClick={() => handleRemoveImage(index)}
+                  >
+                    <X className='h-4 w-4' />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
+
+        <div>
+          <FormLabel>Metadata</FormLabel>
+          <FormControl>
+            <Textarea
+              placeholder='Enter additional product information (JSON format recommended)'
+              {...form.register('metadata')}
+              className='w-full min-h-[100px]'
+            />
+          </FormControl>
+        </div>
+
+        <Button type='submit' className='w-full'>
+          {initialData ? 'Update Product' : 'Create Product'}
+        </Button>
       </form>
     </Form>
   );

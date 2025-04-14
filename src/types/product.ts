@@ -2,11 +2,16 @@ export type Product = {
   id: string;
   name: string;
   subCategoryId: string;
-  description?: string;
-  price: number;
+  description: string;
   status: 'active' | 'inactive';
-  image?: File | string;
   displayOrder: number;
+  price: number;
   menuId: string;
   categoryId: string;
+
+  // New fields
+  tags?: string[];
+  ingredients?: string[];
+  images?: string[];
+  metadata?: string;
 };
