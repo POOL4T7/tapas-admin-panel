@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,87 +21,89 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { getAllCategories } from '@/lib/categories-api';
+import { getAllMenus } from '@/lib/menu-api';
+import {
+  createSubCategory,
+  getAllSubCategories,
+  updateSubCategory,
+} from '@/lib/sub-categories-api';
 
 export default function SubCategoriesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingSubCategory, setEditingSubCategory] = useState<SubCategory | null>(null);
+  const [editingSubCategory, setEditingSubCategory] =
+    useState<SubCategory | null>(null);
   const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null
+  );
+  const [menus, setMenus] = useState<Menu[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const menus: Menu[] = [
-    {
-      id: '1',
-      name: 'Main Menu',
-      description: 'Our primary dining menu',
-      status: 'active',
-      displayOrder: 1,
-    },
-    {
-      id: '2',
-      name: 'Drinks Menu',
-      description: 'Beverages and cocktails',
-      status: 'active',
-      displayOrder: 2,
-    },
-  ];
-
-  const categories: Category[] = [
-    {
-      id: '1',
-      name: 'Appetizers',
-      menuId: '1',
-      description: 'Starters and snacks',
-      status: 'active',
-      displayOrder: 1,
-    },
-    {
-      id: '2',
-      name: 'Main Course',
-      menuId: '1',
-      description: 'Hearty main dishes',
-      status: 'active',
-      displayOrder: 2,
-    },
-  ];
-
-  const [subCategories, setSubCategories] = useState<SubCategory[]>([
-    {
-      id: '1',
-      name: 'Soups',
-      categoryId: '1',
-      description: 'Hot and cold soups',
-      status: 'active',
-      displayOrder: 1,
-    },
-    {
-      id: '2',
-      name: 'Salads',
-      categoryId: '1',
-      description: 'Fresh salads',
-      status: 'inactive',
-      displayOrder: 2,
-    },
-  ]);
+  useEffect(() => {
+    async function fetchCategories() {
+      setLoading(true);
+      try {
+        const data = await getAllCategories();
+        const menus = await getAllMenus();
+        const subCategories = await getAllSubCategories();
+        setCategories(
+          (data?.data || []).map((cat: Category) => ({
+            ...cat,
+            status:
+              typeof cat.status === 'boolean'
+                ? cat.status
+                : cat.status === 'active',
+          }))
+        );
+        setMenus(
+          (menus?.data || []).map((menu: Menu) => ({
+            ...menu,
+            status:
+              typeof menu.status === 'boolean'
+                ? menu.status
+                : menu.status === 'active',
+          }))
+        );
+        setSubCategories(
+          (subCategories?.data || []).map((sc: SubCategory) => ({
+            ...sc,
+            status:
+              typeof sc.status === 'boolean'
+                ? sc.status
+                : sc.status === 'active',
+          }))
+        );
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchCategories();
+  }, []);
 
   // Filter categories based on selected menu
   const filteredCategories = selectedMenuId
-    ? categories.filter((category) => category.menuId === selectedMenuId)
+    ? categories.filter(
+        (category) => category.menuId === Number(selectedMenuId)
+      )
     : categories;
 
   // Filter subcategories based on selected menu and category
   const filteredSubCategories = subCategories.filter((subCategory) => {
-    const matchesMenu = selectedMenuId 
-      ? filteredCategories.some(cat => cat.id === subCategory.categoryId)
+    const matchesMenu = selectedMenuId
+      ? filteredCategories.some(
+          (cat) => Number(cat.id) === Number(subCategory.categoryId)
+        )
       : true;
     const matchesCategory = selectedCategoryId
-      ? subCategory.categoryId === selectedCategoryId
+      ? Number(subCategory.categoryId) === Number(selectedCategoryId)
       : true;
     return matchesMenu && matchesCategory;
   });
-
-  const handleDeleteSubCategory = (subCategory: SubCategory) => {
-    setSubCategories(subCategories.filter((sc) => sc.id !== subCategory.id));
-  };
 
   const handleReorder = (oldIndex: number, newIndex: number) => {
     const newSubCategories = [...filteredSubCategories];
@@ -115,12 +117,81 @@ export default function SubCategoriesPage() {
     }));
 
     setSubCategories(
-      subCategories.map(sc => {
-        const updatedSc = updatedSubCategories.find(u => u.id === sc.id);
+      subCategories.map((sc) => {
+        const updatedSc = updatedSubCategories.find((u) => u.id === sc.id);
         return updatedSc ? updatedSc : sc;
       })
     );
   };
+
+  const handleCreateSubCategory = async (
+    newSubCategory: Omit<SubCategory, 'id'>
+  ) => {
+    setLoading(true);
+    try {
+      const created = await createSubCategory(newSubCategory);
+      setSubCategories((prev) => [...prev, created?.data]);
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to create category:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleEditSubCategory = async (updatedCategory: SubCategory) => {
+    setLoading(true);
+    try {
+      const updated = await updateSubCategory(
+        updatedCategory.id,
+        updatedCategory
+      );
+      setCategories((prev) =>
+        prev.map((cat) => (cat.id === updatedCategory.id ? updated?.data : cat))
+      );
+      setIsDialogOpen(false);
+      setEditingSubCategory(null);
+    } catch (error) {
+      console.error('Failed to update category:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteSubCategory = async (subCategory: SubCategory) => {
+    setLoading(true);
+    try {
+      // await apiDeleteSubCategory(category.id);
+      setSubCategories(subCategories.filter((sc) => sc.id !== subCategory.id));
+    } catch (error) {
+      console.error('Failed to delete category:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleStatus = async (category: SubCategory) => {
+    setLoading(true);
+    try {
+      await updateSubCategory(category.id, {
+        ...category,
+        status: !category.status,
+      });
+      setSubCategories(
+        subCategories.map((sc) =>
+          sc.id === category.id ? { ...sc, status: !sc.status } : sc
+        )
+      );
+    } catch (error) {
+      console.error('Failed to toggle category status:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    console.log(loading);
+    // return <>Loading...</>;
+  }
 
   return (
     <div className='p-4 sm:p-6 md:p-8 w-full max-w-7xl mx-auto'>
@@ -145,7 +216,7 @@ export default function SubCategoriesPage() {
             </SelectTrigger>
             <SelectContent align='end'>
               <SelectItem value='all'>All Menus</SelectItem>
-              {menus.map((menu) => (
+              {menus?.map((menu) => (
                 <SelectItem key={menu.id} value={menu.id}>
                   {menu.name}
                 </SelectItem>
@@ -155,7 +226,7 @@ export default function SubCategoriesPage() {
 
           <Select
             value={selectedCategoryId || ''}
-            onValueChange={(value) => 
+            onValueChange={(value) =>
               setSelectedCategoryId(value === 'all' ? null : value)
             }
             disabled={!selectedMenuId}
@@ -165,7 +236,7 @@ export default function SubCategoriesPage() {
             </SelectTrigger>
             <SelectContent align='end'>
               <SelectItem value='all'>All Categories</SelectItem>
-              {filteredCategories.map((category) => (
+              {filteredCategories?.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   {category.name}
                 </SelectItem>
@@ -184,25 +255,14 @@ export default function SubCategoriesPage() {
                 </DialogTitle>
               </DialogHeader>
               <SubCategoryForm
-                menus={menus}
-                categories={filteredCategories}
+                menus={menus || []}
+                categories={categories || []}
                 initialData={editingSubCategory}
-                onSubmit={(data) => {
+                onSubmit={async (data) => {
                   if (editingSubCategory) {
-                    setSubCategories(
-                      subCategories.map((sc) =>
-                        sc.id === editingSubCategory.id ? { ...sc, ...data } : sc
-                      )
-                    );
+                    await handleEditSubCategory(editingSubCategory);
                   } else {
-                    setSubCategories([
-                      ...subCategories,
-                      {
-                        ...data,
-                        id: Math.random().toString(),
-                        displayOrder: subCategories.length + 1,
-                      },
-                    ]);
+                    await handleCreateSubCategory(data);
                   }
                   setIsDialogOpen(false);
                   setEditingSubCategory(null);
@@ -227,15 +287,7 @@ export default function SubCategoriesPage() {
         }}
         onDelete={handleDeleteSubCategory}
         onReorder={handleReorder}
-        onStatusToggle={(subCategory, isActive) => {
-          setSubCategories(
-            subCategories.map((sc) =>
-              sc.id === subCategory.id
-                ? { ...sc, status: isActive ? 'active' : 'inactive' }
-                : sc
-            )
-          );
-        }}
+        onStatusToggle={toggleStatus}
       />
     </div>
   );

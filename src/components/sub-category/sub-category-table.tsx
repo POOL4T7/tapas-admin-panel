@@ -21,7 +21,7 @@ interface SubCategoryTableProps {
   onEdit: (subCategory: SubCategory) => void;
   onDelete: (subCategory: SubCategory) => void;
   onReorder: (oldIndex: number, newIndex: number) => void;
-  onStatusToggle: (subCategory: SubCategory, status: boolean) => void;
+  onStatusToggle: (subCategory: SubCategory) => void;
 }
 
 export function SubCategoryTable({
@@ -45,10 +45,10 @@ export function SubCategoryTable({
         >
           {subCategories.map((subCategory, index) => {
             const category = categories.find(
-              (c) => c.id === subCategory.categoryId
+              (c) => Number(c.id) === Number(subCategory.categoryId)
             );
             const menu = category
-              ? menus.find((m) => m.id === category.menuId)
+              ? menus.find((m) => Number(m.id) === Number(category.menuId))
               : null;
 
             return (
@@ -70,16 +70,12 @@ export function SubCategoryTable({
                   <Tooltip>
                     <TooltipTrigger>
                       <Switch
-                        checked={subCategory.status === 'active'}
-                        onCheckedChange={(checked) =>
-                          onStatusToggle(subCategory, checked)
-                        }
+                        checked={subCategory.status}
+                        onCheckedChange={() => onStatusToggle(subCategory)}
                       />
                     </TooltipTrigger>
                     <TooltipContent>
-                      {subCategory.status === 'active'
-                        ? 'Deactivate'
-                        : 'Activate'}
+                      {subCategory.status ? 'Deactivate' : 'Activate'}
                     </TooltipContent>
                   </Tooltip>
                 </TableCell>

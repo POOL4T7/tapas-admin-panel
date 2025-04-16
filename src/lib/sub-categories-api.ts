@@ -32,7 +32,7 @@ export async function updateSubCategory(
 // Function to get all sub-categories
 export async function getAllSubCategories() {
   try {
-    const response = await api.get('/api/item/subcategoryId');
+    const response = await api.get('/api/subcategory');
     return response.data;
   } catch (error) {
     throw error;

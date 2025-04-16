@@ -3,8 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useState, useEffect } from 'react';
-
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -28,16 +27,17 @@ import { Category } from '@/types/category';
 import { Menu } from '@/types/menu';
 import { ImagePlus, Trash2 } from 'lucide-react';
 import Image from 'next/image';
+import { Switch } from '../ui/switch';
 
 const subCategorySchema = z.object({
-  menuId: z.string({ required_error: 'Please select a menu' }),
-  categoryId: z.string({ required_error: 'Please select a category' }),
+  menuId: z.coerce.number({ required_error: 'Please select a menu' }),
+  categoryId: z.coerce.number({ required_error: 'Please select a category' }),
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   description: z.string().optional(),
   displayOrder: z.coerce
     .number()
     .min(0, { message: 'Display order must be non-negative' }),
-  status: z.enum(['active', 'inactive']),
+  status: z.boolean(),
   image: z.string().optional(),
 });
 
@@ -56,37 +56,37 @@ export function SubCategoryForm({
   onSubmit,
   onCancel,
 }: SubCategoryFormProps) {
-  const [selectedMenuId, setSelectedMenuId] = useState<string | null>(
-    initialData
-      ? categories.find((c) => c.id === initialData.categoryId)?.menuId || null
-      : null
-  );
-
   const [imagePreview, setImagePreview] = useState<string | null>(
     initialData?.image || null
   );
 
-  const filteredCategories = selectedMenuId
-    ? categories.filter((category) => category.menuId === selectedMenuId)
-    : [];
+  const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
 
   const form = useForm<z.infer<typeof subCategorySchema>>({
     resolver: zodResolver(subCategorySchema),
     defaultValues: {
-      menuId: selectedMenuId || '',
-      categoryId: initialData?.categoryId || '',
+      menuId: initialData?.menuId || 0,
+      categoryId: initialData?.categoryId || 0,
       name: initialData?.name || '',
       description: initialData?.description || '',
       displayOrder: initialData?.displayOrder || 0,
-      status: initialData?.status || 'active',
+      status: initialData?.status || false,
       image: initialData?.image || '',
     },
   });
 
-  // Automatically reset category if selected menu changes
+  const selectedMenuId = form.watch('menuId');
+
   useEffect(() => {
-    form.setValue('categoryId', '');
-  }, [selectedMenuId, form]);
+    if (selectedMenuId) {
+      const filtered = categories.filter(
+        (category) => category.menuId === Number(selectedMenuId)
+      );
+      setFilteredCategories(filtered);
+    } else {
+      setFilteredCategories([]);
+    }
+  }, [selectedMenuId, categories]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -111,35 +111,46 @@ export function SubCategoryForm({
       id: initialData?.id || '', // Preserve existing ID if editing
     });
   };
-
+  console.log(initialData);
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4 sm:space-y-6'>
+      <form
+        onSubmit={form.handleSubmit(handleSubmit)}
+        className='space-y-4 sm:space-y-6'
+      >
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
           <FormField
             control={form.control}
             name='menuId'
             render={({ field }) => (
-              <FormItem>
-                <FormLabel className='font-semibold text-sm sm:text-base'>Menu</FormLabel>
+              <FormItem className='w-full'>
+                <FormLabel className='font-semibold text-sm sm:text-base'>
+                  Menu
+                </FormLabel>
                 <Select
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    setSelectedMenuId(value);
-                  }}
-                  value={field.value}
+                  onValueChange={(value) => field.onChange(value)}
+                  value={field.value ? String(field.value) : ''}
                 >
                   <FormControl>
-                    <SelectTrigger className='w-full bg-white text-sm sm:text-base'>
+                    <SelectTrigger className='w-full bg-white border-gray-300 focus:border-primary focus:ring-primary text-sm sm:text-base'>
                       <SelectValue placeholder='Select a menu' />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {menus.map((menu) => (
-                      <SelectItem key={menu.id} value={menu.id}>
+                    {menus?.map((menu) => (
+                      <SelectItem
+                        key={menu.id}
+                        value={String(menu.id)}
+                        className='text-sm sm:text-base'
+                      >
                         {menu.name}
                       </SelectItem>
                     ))}
+                    {!menus?.length && (
+                      <SelectItem value='' disabled>
+                        No menus available
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage className='text-red-500 text-xs sm:text-sm' />
@@ -152,11 +163,13 @@ export function SubCategoryForm({
             name='categoryId'
             render={({ field }) => (
               <FormItem>
-                <FormLabel className='font-semibold text-sm sm:text-base'>Category</FormLabel>
+                <FormLabel className='font-semibold text-sm sm:text-base'>
+                  Category
+                </FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  value={field.value}
-                  disabled={!selectedMenuId}
+                  value={field.value ? String(field.value) : ''}
+                  disabled={!form.getValues('menuId')}
                 >
                   <FormControl>
                     <SelectTrigger className='w-full bg-white text-sm sm:text-base'>
@@ -164,8 +177,8 @@ export function SubCategoryForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {filteredCategories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
+                    {filteredCategories?.map((category) => (
+                      <SelectItem key={category.id} value={String(category.id)}>
                         {category.name}
                       </SelectItem>
                     ))}
@@ -183,7 +196,9 @@ export function SubCategoryForm({
             name='name'
             render={({ field }) => (
               <FormItem>
-                <FormLabel className='font-semibold text-sm sm:text-base'>Sub Category Name</FormLabel>
+                <FormLabel className='font-semibold text-sm sm:text-base'>
+                  Sub Category Name
+                </FormLabel>
                 <FormControl>
                   <Input
                     placeholder='Enter sub category name'
@@ -201,7 +216,9 @@ export function SubCategoryForm({
             name='displayOrder'
             render={({ field }) => (
               <FormItem>
-                <FormLabel className='font-semibold text-sm sm:text-base'>Display Order</FormLabel>
+                <FormLabel className='font-semibold text-sm sm:text-base'>
+                  Display Order
+                </FormLabel>
                 <FormControl>
                   <Input
                     type='number'
@@ -222,7 +239,9 @@ export function SubCategoryForm({
             name='description'
             render={({ field }) => (
               <FormItem>
-                <FormLabel className='font-semibold text-sm sm:text-base'>Description</FormLabel>
+                <FormLabel className='font-semibold text-sm sm:text-base'>
+                  Description
+                </FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder='Enter sub category description (optional)'
@@ -241,45 +260,31 @@ export function SubCategoryForm({
             control={form.control}
             name='status'
             render={({ field }) => (
-              <FormItem>
-                <div className='flex flex-col space-y-2'>
-                  <FormLabel className='font-semibold text-sm sm:text-base'>Status</FormLabel>
-                  <div className='flex items-center gap-4'>
-                    <FormControl>
-                      <button
-                        type='button'
-                        onClick={() =>
-                          field.onChange(
-                            field.value === 'active' ? 'inactive' : 'active'
-                          )
-                        }
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                          field.value === 'active'
-                            ? 'bg-green-500'
-                            : 'bg-gray-300'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform ${
-                            field.value === 'active'
-                              ? 'translate-x-6'
-                              : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
-                    </FormControl>
-                    <span className='text-sm font-medium'>
-                      {field.value === 'active' ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                  <FormMessage className='text-red-500 text-xs sm:text-sm' />
+              <FormItem className='w-full flex flex-col justify-center'>
+                <FormLabel className='font-semibold text-sm sm:text-base mb-2'>
+                  Status
+                </FormLabel>
+                <div className='flex items-center gap-3'>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      id='menu-status-switch'
+                    />
+                  </FormControl>
+                  <span className='text-sm'>
+                    {field.value ? 'Active' : 'Inactive'}
+                  </span>
                 </div>
+                <FormMessage className='text-red-500 text-xs sm:text-sm mt-1' />
               </FormItem>
             )}
           />
 
           <div className='space-y-2'>
-            <FormLabel className='font-semibold text-sm sm:text-base'>Image</FormLabel>
+            <FormLabel className='font-semibold text-sm sm:text-base'>
+              Image
+            </FormLabel>
             <div className='flex items-center space-x-4'>
               <Input
                 type='file'
