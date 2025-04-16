@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -20,54 +20,110 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  createCategory,
+  updateCategory,
+  getAllCategories,
+  deleteCategory as apiDeleteCategory,
+} from '@/lib/categories-api';
+import { getAllMenus } from '@/lib/menu-api';
 
 export default function CategoriesPage() {
-  // const [isClient, setIsClient] = useState(false);
-  const [menus] = useState<Menu[]>([
-    {
-      id: 'menu1',
-      name: 'Main Menu',
-      description: 'Our primary dining menu',
-      status: 'active',
-      displayOrder: 1,
-    },
-    {
-      id: 'menu2',
-      name: 'Drinks Menu',
-      description: 'Beverages and cocktails',
-      status: 'active',
-      displayOrder: 2,
-    },
-  ]);
-
-  const [categories, setCategories] = useState<Category[]>([
-    {
-      id: 'cat1',
-      name: 'Hot Beverages',
-      menuId: 'menu1',
-      description: 'Warm and comforting drinks',
-      status: 'active',
-      displayOrder: 1,
-    },
-    {
-      id: 'cat2',
-      name: 'Cold Beverages',
-      menuId: 'menu1',
-      description: 'Refreshing chilled drinks',
-      status: 'inactive',
-      displayOrder: 2,
-    },
-  ]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null);
+  const [menus, setMenus] = useState<Menu[]>([]);
 
-  // useEffect(() => {
-  //   setIsClient(true);
-  // }, []);
+  useEffect(() => {
+    async function fetchCategories() {
+      setLoading(true);
+      try {
+        const data = await getAllCategories();
+        const menus = await getAllMenus();
+        setCategories(
+          (data?.data || []).map((cat: Category) => ({
+            ...cat,
+            status:
+              typeof cat.status === 'boolean'
+                ? cat.status
+                : cat.status === 'active',
+          }))
+        );
+        setMenus(
+          (menus?.data || []).map((menu: Menu) => ({
+            ...menu,
+            status:
+              typeof menu.status === 'boolean'
+                ? menu.status
+                : menu.status === 'active',
+          }))
+        );
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchCategories();
+  }, []);
 
-  const handleDeleteCategory = (category: Category) => {
-    setCategories(categories.filter((c) => c.id !== category.id));
+  const handleCreateCategory = async (newCategory: Omit<Category, 'id'>) => {
+    setLoading(true);
+    try {
+      const created = await createCategory(newCategory);
+      setCategories((prev) => [...prev, created?.data]);
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to create category:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleEditCategory = async (updatedCategory: Category) => {
+    setLoading(true);
+    try {
+      const updated = await updateCategory(updatedCategory.id, updatedCategory);
+      setCategories((prev) =>
+        prev.map((cat) => (cat.id === updatedCategory.id ? updated?.data : cat))
+      );
+      setIsDialogOpen(false);
+      setEditingCategory(null);
+    } catch (error) {
+      console.error('Failed to update category:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleDeleteCategory = async (category: Category) => {
+    setLoading(true);
+    try {
+      await apiDeleteCategory(category.id);
+      setCategories(categories.filter((c) => c.id !== category.id));
+    } catch (error) {
+      console.error('Failed to delete category:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const toggleStatus = async (category: Category) => {
+    setLoading(true);
+    try {
+      await updateCategory(category.id, {
+        ...category,
+        status: !category.status,
+      });
+      setCategories(
+        categories.map((c) =>
+          c.id === category.id ? { ...c, status: !c.status } : c
+        )
+      );
+    } catch (error) {
+      console.error('Failed to toggle category status:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReorder = (oldIndex: number, newIndex: number) => {
@@ -86,12 +142,10 @@ export default function CategoriesPage() {
 
   // Filter categories based on selected menu
   const filteredCategories = selectedMenuId
-    ? categories.filter((category) => category.menuId === selectedMenuId)
+    ? categories.filter(
+        (category) => category.menuId === Number(selectedMenuId)
+      )
     : categories;
-
-  // if (!isClient) {
-  //   return null;
-  // }
 
   return (
     <div className='p-4 sm:p-6 md:p-8 w-full max-w-7xl mx-auto'>
@@ -113,7 +167,7 @@ export default function CategoriesPage() {
             </SelectTrigger>
             <SelectContent align='end'>
               <SelectItem value='all'>All Menus</SelectItem>
-              {menus.map((menu) => (
+              {menus?.map((menu) => (
                 <SelectItem key={menu.id} value={menu.id}>
                   {menu.name}
                 </SelectItem>
@@ -123,7 +177,13 @@ export default function CategoriesPage() {
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant='default' className='w-full sm:w-auto'>Add Category</Button>
+              <Button
+                variant='default'
+                className='w-full sm:w-auto'
+                onClick={() => setEditingCategory(null)}
+              >
+                Add Category
+              </Button>
             </DialogTrigger>
             <DialogContent className='w-[90%] max-w-md max-h-[90vh] overflow-y-auto'>
               <DialogHeader>
@@ -132,28 +192,18 @@ export default function CategoriesPage() {
                 </DialogTitle>
               </DialogHeader>
               <CategoryForm
-                menus={menus}
+                menus={menus || []}
                 initialData={editingCategory || undefined}
                 onSubmit={(data) => {
                   if (editingCategory) {
-                    setCategories(
-                      categories.map((c) =>
-                        c.id === editingCategory.id ? { ...c, ...data } : c
-                      )
-                    );
+                    handleEditCategory({ ...editingCategory, ...data });
                   } else {
-                    setCategories([
-                      ...categories,
-                      {
-                        ...data,
-                        id: Math.random().toString(),
-                        displayOrder: categories.length + 1,
-                      },
-                    ]);
+                    handleCreateCategory(data);
                   }
                   setIsDialogOpen(false);
                   setEditingCategory(null);
                 }}
+                loading={loading}
               />
             </DialogContent>
           </Dialog>
@@ -169,15 +219,7 @@ export default function CategoriesPage() {
         }}
         onDelete={handleDeleteCategory}
         onReorder={handleReorder}
-        onStatusToggle={(category, isActive) => {
-          setCategories(
-            categories.map((c) =>
-              c.id === category.id
-                ? { ...c, status: isActive ? 'active' : 'inactive' }
-                : c
-            )
-          );
-        }}
+        onStatusToggle={toggleStatus}
       />
     </div>
   );

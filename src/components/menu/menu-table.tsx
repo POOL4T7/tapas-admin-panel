@@ -1,3 +1,5 @@
+'use client';
+
 import { Menu } from '@/types/menu';
 import { DraggableTable } from '@/components/ui/draggable-table';
 import { DraggableRow } from '@/components/ui/draggable-row';
@@ -17,7 +19,7 @@ interface MenuTableProps {
   onEdit: (menu: Menu) => void;
   onDelete: (menu: Menu) => void;
   onReorder: (oldIndex: number, newIndex: number) => void;
-  onStatusToggle: (menu: Menu, status: boolean) => void;
+  onStatusToggle: (menu: Menu) => void;
 }
 
 export function MenuTable({
@@ -33,7 +35,7 @@ export function MenuTable({
     <TooltipProvider>
       <div className='rounded-md shadow-sm'>
         <DraggableTable items={menus} onReorder={onReorder} headers={headers}>
-          {menus.map((menu, index) => (
+          {menus?.map((menu, index) => (
             <DraggableRow key={menu.id} id={menu.id}>
               <TableCell className='text-center font-mono text-sm'>
                 {index + 1}
@@ -70,14 +72,12 @@ export function MenuTable({
                 <Tooltip>
                   <TooltipTrigger>
                     <Switch
-                      checked={menu.status === 'active'}
-                      onCheckedChange={(checked) =>
-                        onStatusToggle(menu, checked)
-                      }
+                      checked={menu.status}
+                      onCheckedChange={() => onStatusToggle(menu)}
                     />
                   </TooltipTrigger>
                   <TooltipContent>
-                    {menu.status === 'active' ? 'Deactivate' : 'Activate'}
+                    {menu.status ? 'Deactivate' : 'Activate'}
                   </TooltipContent>
                 </Tooltip>
               </TableCell>

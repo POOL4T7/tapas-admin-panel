@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import {
   Form,
   FormControl,
@@ -15,19 +16,12 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Menu } from '@/types/menu';
 
 const menuSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   description: z.string().optional(),
-  status: z.enum(['active', 'inactive']),
+  status: z.boolean(),
   displayOrder: z.coerce
     .number()
     .min(1, { message: 'Display order must be non-negative' }),
@@ -37,15 +31,21 @@ interface MenuFormProps {
   initialData?: Menu;
   onSubmit: (data: Menu) => void;
   onCancel?: () => void;
+  loading?: boolean;
 }
 
-export function MenuForm({ initialData, onSubmit, onCancel }: MenuFormProps) {
+export function MenuForm({
+  initialData,
+  onSubmit,
+  onCancel,
+  loading,
+}: MenuFormProps) {
   const form = useForm<z.infer<typeof menuSchema>>({
     resolver: zodResolver(menuSchema),
     defaultValues: initialData || {
       name: '',
       description: '',
-      status: 'active',
+      status: true, // default to active (true)
       displayOrder: 1,
     },
   });
@@ -60,17 +60,22 @@ export function MenuForm({ initialData, onSubmit, onCancel }: MenuFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4 sm:space-y-6'>
+      <form
+        onSubmit={form.handleSubmit(handleSubmit)}
+        className='space-y-4 sm:space-y-6'
+      >
         <FormField
           control={form.control}
           name='name'
           render={({ field }) => (
             <FormItem>
-              <FormLabel className='font-semibold text-sm sm:text-base'>Menu Name</FormLabel>
+              <FormLabel className='font-semibold text-sm sm:text-base'>
+                Menu Name
+              </FormLabel>
               <FormControl>
-                <Input 
-                  placeholder='Enter menu name' 
-                  {...field} 
+                <Input
+                  placeholder='Enter menu name'
+                  {...field}
                   className='bg-white text-sm sm:text-base'
                 />
               </FormControl>
@@ -85,7 +90,9 @@ export function MenuForm({ initialData, onSubmit, onCancel }: MenuFormProps) {
             name='description'
             render={({ field }) => (
               <FormItem>
-                <FormLabel className='font-semibold text-sm sm:text-base'>Description</FormLabel>
+                <FormLabel className='font-semibold text-sm sm:text-base'>
+                  Description
+                </FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder='Enter menu description'
@@ -105,12 +112,15 @@ export function MenuForm({ initialData, onSubmit, onCancel }: MenuFormProps) {
             name='displayOrder'
             render={({ field }) => (
               <FormItem>
-                <FormLabel className='font-semibold text-sm sm:text-base'>Display Order</FormLabel>
+                <FormLabel className='font-semibold text-sm sm:text-base'>
+                  Display Order
+                </FormLabel>
                 <FormControl>
                   <Input
                     type='number'
                     placeholder='Enter display order'
                     {...field}
+                    value={field.value ?? ''}
                     className='bg-white text-sm sm:text-base'
                   />
                 </FormControl>
@@ -119,26 +129,28 @@ export function MenuForm({ initialData, onSubmit, onCancel }: MenuFormProps) {
             )}
           />
 
+          {/* Status as Switch */}
           <FormField
             control={form.control}
             name='status'
             render={({ field }) => (
-              <FormItem>
-                <div className='flex flex-col space-y-2'>
-                  <FormLabel className='font-semibold text-sm sm:text-base'>Status</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className='w-full bg-white text-sm sm:text-base'>
-                        <SelectValue placeholder='Select menu status' />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value='active'>Active</SelectItem>
-                      <SelectItem value='inactive'>Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage className='text-red-500 text-xs sm:text-sm' />
+              <FormItem className='w-full flex flex-col justify-center'>
+                <FormLabel className='font-semibold text-sm sm:text-base mb-2'>
+                  Status
+                </FormLabel>
+                <div className='flex items-center gap-3'>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      id='menu-status-switch'
+                    />
+                  </FormControl>
+                  <span className='text-sm'>
+                    {field.value ? 'Active' : 'Inactive'}
+                  </span>
                 </div>
+                <FormMessage className='text-red-500 text-xs sm:text-sm mt-1' />
               </FormItem>
             )}
           />
@@ -158,6 +170,7 @@ export function MenuForm({ initialData, onSubmit, onCancel }: MenuFormProps) {
           <Button
             type='submit'
             className='w-full sm:w-auto bg-primary hover:bg-primary-dark transition-colors text-sm sm:text-base'
+            disabled={loading}
           >
             Save Menu
           </Button>

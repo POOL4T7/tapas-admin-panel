@@ -28,12 +28,14 @@ import { Textarea } from '@/components/ui/textarea';
 
 import { Category } from '@/types/category';
 import { Menu } from '@/types/menu';
+import { Switch } from '../ui/switch';
 
 const categorySchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
-  menuId: z.string({ required_error: 'Please select a menu' }),
+  // menuId: z.string({ required_error: 'Please select a menu' }),
+  menuId: z.coerce.number().min(1, { message: 'Please select a menu' }),
   description: z.string().optional(),
-  status: z.enum(['active', 'inactive']),
+  status: z.boolean(),
   image: z.string().optional(),
   displayOrder: z.coerce
     .number()
@@ -45,6 +47,7 @@ interface CategoryFormProps {
   initialData?: Category;
   onSubmit: (data: Category) => void;
   onCancel?: () => void;
+  loading?: boolean;
 }
 
 export function CategoryForm({
@@ -52,6 +55,7 @@ export function CategoryForm({
   initialData,
   onSubmit,
   onCancel,
+  loading,
 }: CategoryFormProps) {
   const [imagePreview, setImagePreview] = useState<string | undefined>(
     initialData?.image
@@ -61,9 +65,9 @@ export function CategoryForm({
     resolver: zodResolver(categorySchema),
     defaultValues: {
       name: initialData?.name || '',
-      menuId: initialData?.menuId || '',
+      menuId: initialData?.menuId || 1,
       description: initialData?.description || '',
-      status: initialData?.status || 'active',
+      status: initialData?.status || false,
       image: initialData?.image,
       displayOrder: initialData?.displayOrder || 0,
     },
@@ -104,29 +108,46 @@ export function CategoryForm({
       image: values.image, // Pass the uploaded file
     });
   };
-
+  console.log(form.getValues('menuId'));
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4 sm:space-y-6'>
+      <form
+        onSubmit={form.handleSubmit(handleSubmit)}
+        className='space-y-4 sm:space-y-6'
+      >
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
           <FormField
             control={form.control}
             name='menuId'
             render={({ field }) => (
               <FormItem className='w-full'>
-                <FormLabel className='font-semibold text-sm sm:text-base'>Menu</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormLabel className='font-semibold text-sm sm:text-base'>
+                  Menu
+                </FormLabel>
+                <Select
+                  onValueChange={(value) => field.onChange(value)}
+                  value={field.value ? String(field.value) : ''}
+                >
                   <FormControl>
                     <SelectTrigger className='w-full bg-white border-gray-300 focus:border-primary focus:ring-primary text-sm sm:text-base'>
                       <SelectValue placeholder='Select a menu' />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {menus.map((menu) => (
-                      <SelectItem key={menu.id} value={menu.id || 'default'}>
+                    {menus?.map((menu) => (
+                      <SelectItem
+                        key={menu.id}
+                        value={String(menu.id)}
+                        className='text-sm sm:text-base'
+                      >
                         {menu.name}
                       </SelectItem>
                     ))}
+                    {!menus?.length && (
+                      <SelectItem value='' disabled>
+                        No menus available
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage className='text-red-500 text-xs sm:text-sm' />
@@ -139,7 +160,9 @@ export function CategoryForm({
             name='name'
             render={({ field }) => (
               <FormItem className='w-full'>
-                <FormLabel className='font-semibold text-sm sm:text-base'>Name</FormLabel>
+                <FormLabel className='font-semibold text-sm sm:text-base'>
+                  Name
+                </FormLabel>
                 <FormControl>
                   <Input
                     placeholder='Enter category name'
@@ -159,7 +182,9 @@ export function CategoryForm({
             name='description'
             render={({ field }) => (
               <FormItem className='w-full'>
-                <FormLabel className='font-semibold text-sm sm:text-base'>Description</FormLabel>
+                <FormLabel className='font-semibold text-sm sm:text-base'>
+                  Description
+                </FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder='Enter description (optional)'
@@ -179,7 +204,9 @@ export function CategoryForm({
             name='displayOrder'
             render={({ field }) => (
               <FormItem className='w-full'>
-                <FormLabel className='font-semibold text-sm sm:text-base'>Display Order</FormLabel>
+                <FormLabel className='font-semibold text-sm sm:text-base'>
+                  Display Order
+                </FormLabel>
                 <FormControl>
                   <Input
                     type='number'
@@ -197,39 +224,23 @@ export function CategoryForm({
             control={form.control}
             name='status'
             render={({ field }) => (
-              <FormItem>
-                <div className='flex flex-col space-y-2'>
-                  <FormLabel className='font-semibold text-sm sm:text-base'>Status</FormLabel>
-                  <div className='flex items-center gap-4'>
-                    <FormControl>
-                      <button
-                        type='button'
-                        onClick={() =>
-                          field.onChange(
-                            field.value === 'active' ? 'inactive' : 'active'
-                          )
-                        }
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                          field.value === 'active'
-                            ? 'bg-green-500'
-                            : 'bg-gray-300'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform ${
-                            field.value === 'active'
-                              ? 'translate-x-6'
-                              : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
-                    </FormControl>
-                    <span className='text-sm font-medium'>
-                      {field.value === 'active' ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                  <FormMessage className='text-red-500 text-xs sm:text-sm' />
+              <FormItem className='w-full flex flex-col justify-center'>
+                <FormLabel className='font-semibold text-sm sm:text-base mb-2'>
+                  Status
+                </FormLabel>
+                <div className='flex items-center gap-3'>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      id='menu-status-switch'
+                    />
+                  </FormControl>
+                  <span className='text-sm'>
+                    {field.value ? 'Active' : 'Inactive'}
+                  </span>
                 </div>
+                <FormMessage className='text-red-500 text-xs sm:text-sm mt-1' />
               </FormItem>
             )}
           />
@@ -237,7 +248,9 @@ export function CategoryForm({
 
         <div className='grid grid-cols-1 gap-4'>
           <div className='space-y-2'>
-            <FormLabel className='font-semibold text-sm sm:text-base'>Image</FormLabel>
+            <FormLabel className='font-semibold text-sm sm:text-base'>
+              Image
+            </FormLabel>
             <div className='flex items-center space-x-4'>
               <Input
                 type='file'
@@ -290,6 +303,7 @@ export function CategoryForm({
           <Button
             type='submit'
             className='w-full sm:w-auto bg-primary hover:bg-primary-dark transition-colors text-sm sm:text-base'
+            disabled={loading}
           >
             {initialData ? 'Update' : 'Create'}
           </Button>

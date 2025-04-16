@@ -19,7 +19,7 @@ interface CategoryTableProps {
   onEdit: (category: Category) => void;
   onDelete: (category: Category) => void;
   onReorder: (oldIndex: number, newIndex: number) => void;
-  onStatusToggle: (category: Category, status: boolean) => void;
+  onStatusToggle: (category: Category) => void;
 }
 
 export function CategoryTable({
@@ -41,7 +41,9 @@ export function CategoryTable({
           headers={headers}
         >
           {categories.map((category, index) => {
-            const menu = menus.find((m) => m.id === category.menuId);
+            const menu = menus.find(
+              (m) => Number(m.id) === Number(category.menuId)
+            );
 
             return (
               <DraggableRow key={category.id} id={category.id}>
@@ -81,14 +83,12 @@ export function CategoryTable({
                   <Tooltip>
                     <TooltipTrigger>
                       <Switch
-                        checked={category.status === 'active'}
-                        onCheckedChange={(checked) =>
-                          onStatusToggle(category, checked)
-                        }
+                        checked={category.status}
+                        onCheckedChange={() => onStatusToggle(category)}
                       />
                     </TooltipTrigger>
                     <TooltipContent>
-                      {category.status === 'active' ? 'Deactivate' : 'Activate'}
+                      {category.status ? 'Deactivate' : 'Activate'}
                     </TooltipContent>
                   </Tooltip>
                 </TableCell>

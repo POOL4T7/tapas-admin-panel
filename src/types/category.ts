@@ -1,9 +1,9 @@
 export type Category = {
   id: string;
   name: string;
-  menuId: string;
+  menuId: number;
   description?: string;
-  status: 'active' | 'inactive';
+  status: boolean;
   image?: string;
   displayOrder: number;
 };
