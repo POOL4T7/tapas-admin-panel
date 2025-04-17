@@ -1,13 +1,13 @@
 export type Product = {
   id: string;
   name: string;
-  subCategoryId: string;
+  subCategoryId: number;
   description: string;
-  status: 'active' | 'inactive';
+  status: boolean;
   displayOrder: number;
   price: number;
-  menuId: string;
-  categoryId: string;
+  menuId: number;
+  categoryId: number;
 
   // New fields
   tags?: string[];

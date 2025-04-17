@@ -36,10 +36,10 @@ type ProductFormValues = {
   description?: string;
   price: number;
   displayOrder: number;
-  menuId: string;
-  categoryId: string;
-  subCategoryId: string;
-  status: 'active' | 'inactive';
+  menuId: number;
+  categoryId: number;
+  subCategoryId: number;
+  status: boolean;
   tags?: string[];
   ingredients?: string[];
   images?: string[];
@@ -53,10 +53,12 @@ const productSchema = z.object({
   displayOrder: z.coerce
     .number()
     .min(0, { message: 'Display order must be non-negative' }),
-  menuId: z.string({ required_error: 'Please select a menu' }),
-  categoryId: z.string({ required_error: 'Please select a category' }),
-  subCategoryId: z.string({ required_error: 'Please select a sub-category' }),
-  status: z.enum(['active', 'inactive']),
+  menuId: z.coerce.number({ required_error: 'Please select a menu' }),
+  categoryId: z.coerce.number({ required_error: 'Please select a category' }),
+  subCategoryId: z.coerce.number({
+    required_error: 'Please select a sub-category',
+  }),
+  status: z.boolean(),
   tags: z.array(z.string()).optional(),
   ingredients: z.array(z.string()).optional(),
   images: z.array(z.string()).optional(),
@@ -90,10 +92,10 @@ export function ProductForm({
       description: initialData?.description || '',
       price: initialData?.price || 0,
       displayOrder: initialData?.displayOrder || 0,
-      menuId: initialData?.menuId || '',
-      categoryId: initialData?.categoryId || '',
-      subCategoryId: initialData?.subCategoryId || '',
-      status: initialData?.status || 'active',
+      menuId: initialData?.menuId || 0,
+      categoryId: initialData?.categoryId || 0,
+      subCategoryId: initialData?.subCategoryId || 0,
+      status: initialData?.status || false,
       tags: initialData?.tags || [],
       ingredients: initialData?.ingredients || [],
       images: initialData?.images || [],
@@ -183,7 +185,7 @@ export function ProductForm({
 
     onSubmit(submissionData);
   };
-
+  console.log('form.getValues', form.getValues('menuId'));
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
@@ -195,7 +197,7 @@ export function ProductForm({
               <FormItem>
                 <FormLabel>Menu</FormLabel>
                 <Select
-                  value={field.value}
+                  value={field.value ? String(field.value) : ''}
                   onValueChange={(value) => {
                     field.onChange(value);
                     form.resetField('categoryId');
@@ -206,8 +208,8 @@ export function ProductForm({
                     <SelectValue placeholder='Select Menu' />
                   </SelectTrigger>
                   <SelectContent>
-                    {menus.map((menu) => (
-                      <SelectItem key={menu.id} value={menu.id}>
+                    {menus?.map((menu) => (
+                      <SelectItem key={menu.id} value={String(menu.id)}>
                         {menu.name}
                       </SelectItem>
                     ))}
@@ -225,7 +227,7 @@ export function ProductForm({
               <FormItem>
                 <FormLabel>Category</FormLabel>
                 <Select
-                  value={field.value}
+                  value={field.value ? String(field.value) : ''}
                   onValueChange={(value) => {
                     field.onChange(value);
                     form.resetField('subCategoryId');
@@ -237,9 +239,14 @@ export function ProductForm({
                   </SelectTrigger>
                   <SelectContent>
                     {categories
-                      .filter((cat) => cat.menuId === form.getValues('menuId'))
+                      .filter(
+                        (cat) => cat.menuId === Number(form.getValues('menuId'))
+                      )
                       .map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
+                        <SelectItem
+                          key={category.id}
+                          value={String(category.id)}
+                        >
                           {category.name}
                         </SelectItem>
                       ))}
@@ -257,7 +264,7 @@ export function ProductForm({
               <FormItem>
                 <FormLabel>Sub Category</FormLabel>
                 <Select
-                  value={field.value}
+                  value={field.value ? String(field.value) : ''}
                   onValueChange={field.onChange}
                   disabled={!form.getValues('categoryId')}
                 >
@@ -267,10 +274,14 @@ export function ProductForm({
                   <SelectContent>
                     {subCategories
                       .filter(
-                        (sc) => sc.categoryId === form.getValues('categoryId')
+                        (sc) =>
+                          sc.categoryId === Number(form.getValues('categoryId'))
                       )
                       .map((subCategory) => (
-                        <SelectItem key={subCategory.id} value={subCategory.id}>
+                        <SelectItem
+                          key={subCategory.id}
+                          value={String(subCategory.id)}
+                        >
                           {subCategory.name}
                         </SelectItem>
                       ))}
@@ -348,10 +359,8 @@ export function ProductForm({
                 <FormLabel>Status</FormLabel>
                 <FormControl>
                   <Switch
-                    checked={field.value === 'active'}
-                    onCheckedChange={(checked) =>
-                      field.onChange(checked ? 'active' : 'inactive')
-                    }
+                    checked={field.value}
+                    onCheckedChange={(checked) => field.onChange(checked)}
                   />
                 </FormControl>
               </FormItem>

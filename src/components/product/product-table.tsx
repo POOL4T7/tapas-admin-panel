@@ -64,13 +64,15 @@ export function ProductTable({
         >
           {products.map((product, index) => {
             const subCategory = subCategories.find(
-              (sc) => sc.id === product.subCategoryId
+              (sc) => Number(sc.id) === Number(product.subCategoryId)
             );
             const category = subCategory
-              ? categories.find((c) => c.id === subCategory.categoryId)
+              ? categories.find(
+                  (c) => Number(c.id) === Number(subCategory.categoryId)
+                )
               : null;
             const menu = category
-              ? menus.find((m) => m.id === category.menuId)
+              ? menus.find((m) => Number(m.id) === Number(category.menuId))
               : null;
 
             return (
@@ -89,14 +91,14 @@ export function ProductTable({
                   <Tooltip>
                     <TooltipTrigger>
                       <Switch
-                        checked={product.status === 'active'}
+                        checked={product.status}
                         onCheckedChange={(checked) =>
                           onStatusToggle(product, checked)
                         }
                       />
                     </TooltipTrigger>
                     <TooltipContent>
-                      {product.status === 'active' ? 'Deactivate' : 'Activate'}
+                      {product.status ? 'Deactivate' : 'Activate'}
                     </TooltipContent>
                   </Tooltip>
                 </TableCell>

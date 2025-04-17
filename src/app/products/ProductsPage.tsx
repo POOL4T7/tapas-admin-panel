@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -22,6 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { getAllCategories } from '@/lib/categories-api';
+import { getAllMenus } from '@/lib/menu-api';
+import { getAllSubCategories } from '@/lib/sub-categories-api';
+import {
+  createProduct,
+  getAllProducts,
+  updateProduct,
+} from '@/lib/products-api';
 
 export default function ProductsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -33,99 +41,75 @@ export default function ProductsPage() {
   const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<
     string | null
   >(null);
+  const [menus, setMenus] = useState<Menu[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const menus: Menu[] = [
-    {
-      id: '1',
-      name: 'Main Menu',
-      description: 'Our primary dining menu',
-      status: 'active',
-      displayOrder: 1,
-    },
-    {
-      id: '2',
-      name: 'Drinks Menu',
-      description: 'Beverages and cocktails',
-      status: 'active',
-      displayOrder: 2,
-    },
-  ];
+  useEffect(() => {
+    async function fetchCategories() {
+      setLoading(true);
+      try {
+        const data = await getAllCategories();
+        const menus = await getAllMenus();
+        const subCategories = await getAllSubCategories();
+        const productList = await getAllProducts();
+        console.log(productList);
+        setProducts(productList?.data || []);
+        setCategories(
+          (data?.data || []).map((cat: Category) => ({
+            ...cat,
+            status:
+              typeof cat.status === 'boolean'
+                ? cat.status
+                : cat.status === 'active',
+          }))
+        );
+        setMenus(
+          (menus?.data || []).map((menu: Menu) => ({
+            ...menu,
+            status:
+              typeof menu.status === 'boolean'
+                ? menu.status
+                : menu.status === 'active',
+          }))
+        );
+        setSubCategories(
+          (subCategories?.data || []).map((sc: SubCategory) => ({
+            ...sc,
+            status:
+              typeof sc.status === 'boolean'
+                ? sc.status
+                : sc.status === 'active',
+          }))
+        );
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchCategories();
+  }, []);
 
-  const categories: Category[] = [
-    {
-      id: '1',
-      name: 'Appetizers',
-      menuId: '1',
-      description: 'Starters and snacks',
-      status: 'active',
-      displayOrder: 1,
-    },
-    {
-      id: '2',
-      name: 'Main Course',
-      menuId: '1',
-      description: 'Hearty main dishes',
-      status: 'active',
-      displayOrder: 2,
-    },
-  ];
-
-  const subCategories: SubCategory[] = [
-    {
-      id: '1',
-      name: 'Cold Appetizers',
-      categoryId: '1',
-      description: 'Chilled starters',
-      status: 'active',
-      displayOrder: 1,
-    },
-    {
-      id: '2',
-      name: 'Hot Appetizers',
-      categoryId: '1',
-      description: 'Warm starters',
-      status: 'active',
-      displayOrder: 2,
-    },
-  ];
-
-  const [products, setProducts] = useState<Product[]>([
-    {
-      id: '1',
-      name: 'Caesar Salad',
-      subCategoryId: '1',
-      description: 'Classic Caesar salad with crisp romaine',
-      status: 'active',
-      displayOrder: 1,
-      price: 8.99,
-      menuId: '1',
-      categoryId: '1',
-    },
-    {
-      id: '2',
-      name: 'Chicken Wings',
-      subCategoryId: '2',
-      description: 'Spicy buffalo chicken wings',
-      status: 'inactive',
-      displayOrder: 2,
-      price: 10.99,
-      menuId: '1',
-      categoryId: '2',
-    },
-  ]);
+  const [products, setProducts] = useState<Product[]>([]);
 
   // Filter categories based on selected menu
   const filteredCategories = selectedMenuId
-    ? categories.filter((category) => category.menuId === selectedMenuId)
+    ? categories.filter(
+        (category) => Number(category.menuId) === Number(selectedMenuId)
+      )
     : categories;
 
   // Filter subcategories based on selected menu and category
   const filteredSubCategories = subCategories.filter((subCategory) => {
     const matchesMenu = selectedMenuId
-      ? filteredCategories.some((cat) => cat.id === subCategory.categoryId)
+      ? filteredCategories.some(
+          (cat) => Number(cat.id) === Number(subCategory.categoryId)
+        )
       : true;
     const matchesCategory = selectedCategoryId
-      ? subCategory.categoryId === selectedCategoryId
+      ? Number(subCategory.categoryId) === Number(selectedCategoryId)
       : true;
     return matchesMenu && matchesCategory;
   });
@@ -133,24 +117,86 @@ export default function ProductsPage() {
   // Filter products based on selected menu, category, and subcategory
   const filteredProducts = products.filter((product) => {
     const matchesMenu = selectedMenuId
-      ? filteredSubCategories.some((sc) => sc.id === product.subCategoryId)
+      ? filteredSubCategories.some(
+          (sc) => Number(sc.id) === Number(product.subCategoryId)
+        )
       : true;
     const matchesCategory = selectedCategoryId
       ? filteredSubCategories.some(
           (sc) =>
-            sc.id === product.subCategoryId &&
-            sc.categoryId === selectedCategoryId
+            Number(sc.id) === Number(product.subCategoryId) &&
+            Number(sc.categoryId) === Number(selectedCategoryId)
         )
       : true;
     const matchesSubCategory = selectedSubCategoryId
-      ? product.subCategoryId === selectedSubCategoryId
+      ? Number(product.subCategoryId) === Number(selectedSubCategoryId)
       : true;
     return matchesMenu && matchesCategory && matchesSubCategory;
   });
 
-  const handleDeleteProduct = (product: Product) => {
-    setProducts(products.filter((p) => p.id !== product.id));
+  const handleCreateProduct = async (newProduct: Omit<Product, 'id'>) => {
+    setLoading(true);
+    try {
+      const created = await createProduct(newProduct);
+      setProducts((prev) => [...prev, created?.data]);
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to create category:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+  const handleEditProduct = async (updatedProduct: Product) => {
+    setLoading(true);
+    try {
+      const updated = await updateProduct(updatedProduct.id, updatedProduct);
+      setProducts((prev) =>
+        prev.map((p) => (p.id === updatedProduct.id ? updated?.data : p))
+      );
+      setIsDialogOpen(false);
+      setEditingProduct(null);
+    } catch (error) {
+      console.error('Failed to update product:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteProduct = async (product: Product) => {
+    setLoading(true);
+    try {
+      // await apiDeleteSubCategory(category.id);
+      setProducts(products.filter((p) => p.id !== product.id));
+    } catch (error) {
+      console.error('Failed to delete category:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleStatus = async (product: Product) => {
+    setLoading(true);
+    try {
+      await updateProduct(product.id, {
+        ...product,
+        status: !product.status,
+      });
+      setProducts(
+        products.map((p) =>
+          p.id === product.id ? { ...p, status: !p.status } : p
+        )
+      );
+    } catch (error) {
+      console.error('Failed to toggle product status:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    console.log(loading);
+    // return <>Loading...</>;
+  }
 
   const handleReorder = (oldIndex: number, newIndex: number) => {
     const newProducts = [...filteredProducts];
@@ -168,21 +214,6 @@ export default function ProductsPage() {
         const updatedP = updatedProducts.find((u) => u.id === p.id);
         return updatedP ? updatedP : p;
       })
-    );
-  };
-
-  const handleEditProduct = (product: Product) => {
-    setEditingProduct(product);
-    setIsDialogOpen(true);
-  };
-
-  const handleStatusToggle = (product: Product, isActive: boolean) => {
-    setProducts(
-      products.map((p) =>
-        p.id === product.id
-          ? { ...p, status: isActive ? 'active' : 'inactive' }
-          : p
-      )
     );
   };
 
@@ -275,26 +306,15 @@ export default function ProductsPage() {
                 </DialogTitle>
               </DialogHeader>
               <ProductForm
-                subCategories={filteredSubCategories}
+                subCategories={subCategories}
                 categories={categories}
                 menus={menus}
                 initialData={editingProduct || undefined}
-                onSubmit={(data) => {
+                onSubmit={async (data) => {
                   if (editingProduct) {
-                    setProducts(
-                      products.map((p) =>
-                        p.id === editingProduct.id ? { ...p, ...data } : p
-                      )
-                    );
+                    await handleEditProduct({ ...editingProduct, ...data });
                   } else {
-                    setProducts([
-                      ...products,
-                      {
-                        ...data,
-                        id: Math.random().toString(),
-                        displayOrder: products.length + 1,
-                      },
-                    ]);
+                    await handleCreateProduct(data);
                   }
                   setIsDialogOpen(false);
                   setEditingProduct(null);
@@ -310,10 +330,13 @@ export default function ProductsPage() {
         subCategories={filteredSubCategories}
         categories={filteredCategories}
         menus={menus}
-        onEdit={handleEditProduct}
+        onEdit={(product) => {
+          setEditingProduct(product);
+          setIsDialogOpen(true);
+        }}
         onDelete={handleDeleteProduct}
         onReorder={handleReorder}
-        onStatusToggle={handleStatusToggle}
+        onStatusToggle={toggleStatus}
       />
     </div>
   );
