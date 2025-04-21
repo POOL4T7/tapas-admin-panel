@@ -1,16 +1,26 @@
 export type OfferType = 'combo' | 'discount' | 'special';
 
 export interface Offer {
-  id?: string;
+  id: number;
   name: string;
-  offerType: OfferType;
-  foodItems: string[];
-  drinkItems: string[];
-  foodItemPrice: number;
-  drinkItemPrice: number;
-  description?: string;
-  startDate?: Date;
-  endDate?: Date;
-  status: 'active' | 'inactive';
-  displayOrder: number;
+  description: string;
+  startDate: Date;
+  endDate: Date;
+  discountPercentage: number;
+  status: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+  drinks: Item[];
+  foods: Item[];
+}
+
+export interface Item {
+  id: number;
+  name: string;
+  price: number;
+  image: string;
+  description: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  status: boolean;
 }

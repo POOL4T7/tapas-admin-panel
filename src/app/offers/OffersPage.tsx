@@ -1,134 +1,148 @@
-// 'use client';
+'use client';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import OfferForm from '@/components/offer/OfferForm';
+import OfferTable from '@/components/offer/OfferTable';
+import { Offer } from '@/types/offer';
+import type { OfferFormValues } from '@/components/offer/OfferForm';
 
-// import { useState } from 'react';
-// import { Plus, Pencil, Trash2 } from 'lucide-react';
+const emptyOffer = (): Offer => ({
+  id: Date.now(),
+  name: '',
+  description: '',
+  startDate: new Date(),
+  endDate: new Date(),
+  discountPercentage: 0,
+  status: true,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  drinks: [],
+  foods: [],
+});
 
-// import { Button } from '@/components/ui/button';
-// import {
-//   Table,
-//   TableBody,
-//   TableCell,
-//   TableHead,
-//   TableHeader,
-//   TableRow
-// } from '@/components/ui/table';
-// import {
-//   Dialog,
-//   DialogContent,
-//   DialogHeader,
-//   DialogTitle,
-//   DialogTrigger
-// } from '@/components/ui/dialog';
+export default function OffersPage() {
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
 
-// import { Offer } from '@/types/offer';
-// import { OfferForm } from '@/components/offer/offer-form';
+  const handleCreateOffer = (data: OfferFormValues) => {
+    setOffers((prev) => [
+      ...prev,
+      {
+        ...data,
+        id: Date.now(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        startDate: new Date(data.startDate),
+        endDate: new Date(data.endDate),
+      },
+    ]);
+    setIsDialogOpen(false);
+    setEditingOffer(null);
+  };
 
-// export default function OffersPage() {
-//   const [offers, setOffers] = useState<Offer[]>([]);
-//   const [selectedOffer, setSelectedOffer] = useState<Offer | undefined>(undefined);
-//   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const handleEditOffer = (data: OfferFormValues) => {
+    setOffers((prev) =>
+      prev.map((o) =>
+        o.id === data.id
+          ? {
+              ...o,
+              ...data,
+              updatedAt: new Date(),
+              startDate: new Date(data.startDate),
+              endDate: new Date(data.endDate),
+            }
+          : o
+      )
+    );
+    setIsDialogOpen(false);
+    setEditingOffer(null);
+  };
 
-//   const handleAddOffer = (newOffer: Omit<Offer, 'id'>) => {
-//     const offerWithId = {
-//       ...newOffer,
-//       id: `offer_${Date.now()}`, // Temporary ID generation
-//     };
-//     setOffers(prevOffers => [...prevOffers, offerWithId]);
-//     setIsDialogOpen(false);
-//   };
+  const handleDeleteOffer = (offer: Offer) => {
+    setOffers((prev) => prev.filter((o) => o.id !== offer.id));
+  };
 
-//   const handleEditOffer = (updatedOffer: Offer) => {
-//     setOffers(prevOffers =>
-//       prevOffers.map(offer =>
-//         offer.id === updatedOffer.id ? updatedOffer : offer
-//       )
-//     );
-//     setIsDialogOpen(false);
-//     setSelectedOffer(undefined);
-//   };
+  const toggleStatus = (offer: Offer) => {
+    setOffers((prev) =>
+      prev.map((o) =>
+        o.id === offer.id
+          ? { ...o, status: !o.status, updatedAt: new Date() }
+          : o
+      )
+    );
+  };
 
-//   const handleDeleteOffer = (offerId: string) => {
-//     setOffers(prevOffers =>
-//       prevOffers.filter(offer => offer.id !== offerId)
-//     );
-//   };
+  const handleReorder = (oldIndex: number, newIndex: number) => {
+    setOffers((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(oldIndex, 1);
+      next.splice(newIndex, 0, moved);
+      return next;
+    });
+  };
 
-//   const openEditDialog = (offer: Offer) => {
-//     setSelectedOffer(offer);
-//     setIsDialogOpen(true);
-//   };
-
-//   return (
-//     <div className='container mx-auto px-4 py-6'>
-//       <div className='flex justify-between items-center mb-6'>
-//         <h1 className='text-2xl font-bold'>Offers Management</h1>
-//         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-//           <DialogTrigger asChild>
-//             <Button onClick={() => setSelectedOffer(undefined)}>
-//               <Plus className='mr-2 h-4 w-4' /> Add New Offer
-//             </Button>
-//           </DialogTrigger>
-//           <DialogContent className='sm:max-w-[800px]'>
-//             <DialogHeader>
-//               <DialogTitle>
-//                 {selectedOffer ? 'Edit Offer' : 'Create New Offer'}
-//               </DialogTitle>
-//             </DialogHeader>
-//             <OfferForm
-//               initialData={selectedOffer}
-//               onSubmit={selectedOffer ? handleEditOffer : handleAddOffer}
-//             />
-//           </DialogContent>
-//         </Dialog>
-//       </div>
-
-//       <Table>
-//         <TableHeader>
-//           <TableRow>
-//             <TableHead>Name</TableHead>
-//             <TableHead>Type</TableHead>
-//             <TableHead>Status</TableHead>
-//             <TableHead>Display Order</TableHead>
-//             <TableHead>Actions</TableHead>
-//           </TableRow>
-//         </TableHeader>
-//         <TableBody>
-//           {offers.map((offer) => (
-//             <TableRow key={offer.id}>
-//               <TableCell>{offer.name}</TableCell>
-//               <TableCell>{offer.offerType}</TableCell>
-//               <TableCell>{offer.status}</TableCell>
-//               <TableCell>{offer.displayOrder}</TableCell>
-//               <TableCell>
-//                 <div className='flex space-x-2'>
-//                   <Button
-//                     variant='outline'
-//                     size='sm'
-//                     onClick={() => openEditDialog(offer)}
-//                   >
-//                     <Pencil className='h-4 w-4' />
-//                   </Button>
-//                   <Button
-//                     variant='destructive'
-//                     size='sm'
-//                     onClick={() => handleDeleteOffer(offer.id!)}
-//                   >
-//                     <Trash2 className='h-4 w-4' />
-//                   </Button>
-//                 </div>
-//               </TableCell>
-//             </TableRow>
-//           ))}
-//         </TableBody>
-//       </Table>
-//     </div>
-//   );
-// }
-
-import React from 'react';
-
-const OffersPage = () => {
-  return <div>OffersPage</div>;
-};
-
-export default OffersPage;
+  return (
+    <div className='p-4 sm:p-6 md:p-8 w-full max-w-7xl mx-auto'>
+      <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 space-y-4 sm:space-y-0 sm:space-x-4'>
+        <div className='text-center sm:text-left'>
+          <h1 className='text-xl sm:text-2xl font-semibold'>Offers</h1>
+          <p className='text-sm text-muted-foreground'>Manage your offers</p>
+        </div>
+        <div className='flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto'>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                className='w-full sm:w-auto'
+                onClick={() => {
+                  setEditingOffer(null);
+                  setIsDialogOpen(true);
+                }}
+              >
+                Add Offer
+              </Button>
+            </DialogTrigger>
+            <DialogContent className='w-[90%] max-w-4xl max-h-[90vh] overflow-y-auto'>
+              <DialogHeader>
+                <DialogTitle>{editingOffer ? 'Edit' : 'Add'} Offer</DialogTitle>
+              </DialogHeader>
+              <OfferForm
+                offer={editingOffer || emptyOffer()}
+                // onChange={() => {}}
+                onSubmit={(values) => {
+                  if (editingOffer) {
+                    handleEditOffer({ ...editingOffer, ...values });
+                  } else {
+                    handleCreateOffer(values);
+                  }
+                }}
+                onCancel={() => {
+                  setIsDialogOpen(false);
+                  setEditingOffer(null);
+                }}
+                editing={!!editingOffer}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+      <OfferTable
+        offers={offers}
+        onEdit={(offer) => {
+          setEditingOffer(offer);
+          setIsDialogOpen(true);
+        }}
+        onDelete={handleDeleteOffer}
+        onReorder={handleReorder}
+        onStatusToggle={toggleStatus}
+      />
+    </div>
+  );
+}
