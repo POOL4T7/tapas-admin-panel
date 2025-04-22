@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -24,13 +24,12 @@ import {
 } from '@/components/ui/select';
 import { SubCategory } from '@/types/sub-category';
 import { Category } from '@/types/category';
-import { Menu } from '@/types/menu';
 import { ImagePlus, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { Switch } from '../ui/switch';
 
 const subCategorySchema = z.object({
-  menuId: z.coerce.number({ required_error: 'Please select a menu' }),
+  // menuId: z.coerce.number({ required_error: 'Please select a menu' }),
   categoryId: z.coerce.number({ required_error: 'Please select a category' }),
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   description: z.string().optional(),
@@ -43,7 +42,7 @@ const subCategorySchema = z.object({
 
 interface SubCategoryFormProps {
   initialData?: SubCategory | null;
-  menus: Menu[];
+  // menus: Menu[];
   categories: Category[];
   onSubmit: (data: SubCategory) => void;
   onCancel?: () => void;
@@ -51,7 +50,7 @@ interface SubCategoryFormProps {
 
 export function SubCategoryForm({
   initialData,
-  menus,
+  // menus,
   categories,
   onSubmit,
   onCancel,
@@ -60,12 +59,12 @@ export function SubCategoryForm({
     initialData?.image || null
   );
 
-  const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
+  // const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
 
   const form = useForm<z.infer<typeof subCategorySchema>>({
     resolver: zodResolver(subCategorySchema),
     defaultValues: {
-      menuId: initialData?.menuId || 0,
+      // menuId: initialData?.menuId || 0,
       categoryId: initialData?.categoryId || 0,
       name: initialData?.name || '',
       description: initialData?.description || '',
@@ -74,19 +73,6 @@ export function SubCategoryForm({
       image: initialData?.image || '',
     },
   });
-
-  const selectedMenuId = form.watch('menuId');
-
-  useEffect(() => {
-    if (selectedMenuId) {
-      const filtered = categories.filter(
-        (category) => category.menuId === Number(selectedMenuId)
-      );
-      setFilteredCategories(filtered);
-    } else {
-      setFilteredCategories([]);
-    }
-  }, [selectedMenuId, categories]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -111,53 +97,14 @@ export function SubCategoryForm({
       id: initialData?.id || '', // Preserve existing ID if editing
     });
   };
-  console.log(initialData);
+
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
         className='space-y-4 sm:space-y-6'
       >
-        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-          <FormField
-            control={form.control}
-            name='menuId'
-            render={({ field }) => (
-              <FormItem className='w-full'>
-                <FormLabel className='font-semibold text-sm sm:text-base'>
-                  Menu
-                </FormLabel>
-                <Select
-                  onValueChange={(value) => field.onChange(value)}
-                  value={field.value ? String(field.value) : ''}
-                >
-                  <FormControl>
-                    <SelectTrigger className='w-full bg-white border-gray-300 focus:border-primary focus:ring-primary text-sm sm:text-base'>
-                      <SelectValue placeholder='Select a menu' />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {menus?.map((menu) => (
-                      <SelectItem
-                        key={menu.id}
-                        value={String(menu.id)}
-                        className='text-sm sm:text-base'
-                      >
-                        {menu.name}
-                      </SelectItem>
-                    ))}
-                    {!menus?.length && (
-                      <SelectItem value='' disabled>
-                        No menus available
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-                <FormMessage className='text-red-500 text-xs sm:text-sm' />
-              </FormItem>
-            )}
-          />
-
+        <div className=''>
           <FormField
             control={form.control}
             name='categoryId'
@@ -169,7 +116,6 @@ export function SubCategoryForm({
                 <Select
                   onValueChange={field.onChange}
                   value={field.value ? String(field.value) : ''}
-                  disabled={!form.getValues('menuId')}
                 >
                   <FormControl>
                     <SelectTrigger className='w-full bg-white text-sm sm:text-base'>
@@ -177,7 +123,7 @@ export function SubCategoryForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {filteredCategories?.map((category) => (
+                    {categories?.map((category) => (
                       <SelectItem key={category.id} value={String(category.id)}>
                         {category.name}
                       </SelectItem>

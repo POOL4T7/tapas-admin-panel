@@ -1,5 +1,5 @@
 import { Category } from '@/types/category';
-import { Menu } from '@/types/menu';
+// import { Menu } from '@/types/menu';
 import { DraggableTable } from '@/components/ui/draggable-table';
 import { DraggableRow } from '@/components/ui/draggable-row';
 import { TableCell } from '@/components/ui/table';
@@ -15,7 +15,7 @@ import {
 
 interface CategoryTableProps {
   categories: Category[];
-  menus: Menu[];
+  // menus: Menu[];
   onEdit: (category: Category) => void;
   onDelete: (category: Category) => void;
   onReorder: (oldIndex: number, newIndex: number) => void;
@@ -24,13 +24,12 @@ interface CategoryTableProps {
 
 export function CategoryTable({
   categories,
-  menus,
   onEdit,
   onDelete,
   onReorder,
   onStatusToggle,
 }: CategoryTableProps) {
-  const headers = ['S.No', 'Name', 'Menu', 'Description', 'Status', 'Actions'];
+  const headers = ['S.No', 'Name', 'Description', 'Status', 'Actions'];
 
   return (
     <TooltipProvider>
@@ -41,17 +40,13 @@ export function CategoryTable({
           headers={headers}
         >
           {categories.map((category, index) => {
-            const menu = menus.find(
-              (m) => Number(m.id) === Number(category.menuId)
-            );
-
             return (
               <DraggableRow key={category.id} id={category.id}>
                 <TableCell className='text-center font-mono text-sm'>
                   {index + 1}
                 </TableCell>
                 <TableCell className='font-medium'>{category.name}</TableCell>
-                <TableCell>{menu?.name || 'Unknown Menu'}</TableCell>
+
                 <TableCell className='max-w-[300px]'>
                   {category.description ? (
                     <div className='flex items-center'>

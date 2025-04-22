@@ -6,7 +6,6 @@ export type Product = {
   status: boolean;
   displayOrder: number;
   price: number;
-  menuId: number;
   categoryId: number;
 
   // New fields

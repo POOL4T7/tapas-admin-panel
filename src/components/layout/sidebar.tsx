@@ -33,7 +33,7 @@ const sidebarLinks = [
     href: '/sub-categories',
   },
   {
-    title: 'Products',
+    title: 'Items',
     icon: Package,
     href: '/products',
   },

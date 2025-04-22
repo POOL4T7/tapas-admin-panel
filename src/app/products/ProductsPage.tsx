@@ -14,7 +14,7 @@ import { ProductTable } from '@/components/product/product-table';
 import { Product } from '@/types/product';
 import { SubCategory } from '@/types/sub-category';
 import { Category } from '@/types/category';
-import { Menu } from '@/types/menu';
+// import { Menu } from '@/types/menu';
 import {
   Select,
   SelectContent,
@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getAllCategories } from '@/lib/categories-api';
-import { getAllMenus } from '@/lib/menu-api';
+// import { getAllMenus } from '@/lib/menu-api';
 import { getAllSubCategories } from '@/lib/sub-categories-api';
 import {
   createProduct,
@@ -34,14 +34,14 @@ import {
 export default function ProductsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null);
+  // const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null
   );
   const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<
     string | null
   >(null);
-  const [menus, setMenus] = useState<Menu[]>([]);
+  // const [menus, setMenus] = useState<Menu[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [loading, setLoading] = useState(false);
@@ -51,7 +51,7 @@ export default function ProductsPage() {
       setLoading(true);
       try {
         const data = await getAllCategories();
-        const menus = await getAllMenus();
+        // const menus = await getAllMenus();
         const subCategories = await getAllSubCategories();
         const productList = await getAllProducts();
         console.log(productList);
@@ -65,15 +65,15 @@ export default function ProductsPage() {
                 : cat.status === 'active',
           }))
         );
-        setMenus(
-          (menus?.data || []).map((menu: Menu) => ({
-            ...menu,
-            status:
-              typeof menu.status === 'boolean'
-                ? menu.status
-                : menu.status === 'active',
-          }))
-        );
+        // setMenus(
+        //   (menus?.data || []).map((menu: Menu) => ({
+        //     ...menu,
+        //     status:
+        //       typeof menu.status === 'boolean'
+        //         ? menu.status
+        //         : menu.status === 'active',
+        //   }))
+        // );
         setSubCategories(
           (subCategories?.data || []).map((sc: SubCategory) => ({
             ...sc,
@@ -94,44 +94,15 @@ export default function ProductsPage() {
 
   const [products, setProducts] = useState<Product[]>([]);
 
-  // Filter categories based on selected menu
-  const filteredCategories = selectedMenuId
-    ? categories.filter(
-        (category) => Number(category.menuId) === Number(selectedMenuId)
-      )
-    : categories;
-
-  // Filter subcategories based on selected menu and category
-  const filteredSubCategories = subCategories.filter((subCategory) => {
-    const matchesMenu = selectedMenuId
-      ? filteredCategories.some(
-          (cat) => Number(cat.id) === Number(subCategory.categoryId)
-        )
-      : true;
-    const matchesCategory = selectedCategoryId
-      ? Number(subCategory.categoryId) === Number(selectedCategoryId)
-      : true;
-    return matchesMenu && matchesCategory;
-  });
-
   // Filter products based on selected menu, category, and subcategory
   const filteredProducts = products.filter((product) => {
-    const matchesMenu = selectedMenuId
-      ? filteredSubCategories.some(
-          (sc) => Number(sc.id) === Number(product.subCategoryId)
-        )
-      : true;
     const matchesCategory = selectedCategoryId
-      ? filteredSubCategories.some(
-          (sc) =>
-            Number(sc.id) === Number(product.subCategoryId) &&
-            Number(sc.categoryId) === Number(selectedCategoryId)
-        )
+      ? product.categoryId === parseInt(selectedCategoryId)
       : true;
     const matchesSubCategory = selectedSubCategoryId
-      ? Number(product.subCategoryId) === Number(selectedSubCategoryId)
+      ? product.subCategoryId === parseInt(selectedSubCategoryId)
       : true;
-    return matchesMenu && matchesCategory && matchesSubCategory;
+    return matchesCategory && matchesSubCategory;
   });
 
   const handleCreateProduct = async (newProduct: Omit<Product, 'id'>) => {
@@ -146,6 +117,7 @@ export default function ProductsPage() {
       setLoading(false);
     }
   };
+
   const handleEditProduct = async (updatedProduct: Product) => {
     setLoading(true);
     try {
@@ -221,48 +193,24 @@ export default function ProductsPage() {
     <div className='p-4 sm:p-6 md:p-8 w-full max-w-7xl mx-auto'>
       <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 space-y-4 sm:space-y-0 sm:space-x-4'>
         <div className='text-center sm:text-left'>
-          <h1 className='text-xl sm:text-2xl font-semibold'>Products</h1>
-          <p className='text-sm text-muted-foreground'>
-            Manage your menu products
-          </p>
+          <h1 className='text-xl sm:text-2xl font-semibold'>Items</h1>
+          <p className='text-sm text-muted-foreground'>Manage your Items</p>
         </div>
 
         <div className='flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto'>
-          <Select
-            value={selectedMenuId || ''}
-            onValueChange={(value) => {
-              setSelectedMenuId(value === 'all' ? null : value);
-              setSelectedCategoryId(null); // Reset category filter
-              setSelectedSubCategoryId(null); // Reset subcategory filter
-            }}
-          >
-            <SelectTrigger className='w-full sm:w-[180px]'>
-              <SelectValue placeholder='Filter by Menu' />
-            </SelectTrigger>
-            <SelectContent align='end'>
-              <SelectItem value='all'>All Menus</SelectItem>
-              {menus.map((menu) => (
-                <SelectItem key={menu.id} value={menu.id}>
-                  {menu.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
           <Select
             value={selectedCategoryId || ''}
             onValueChange={(value) => {
               setSelectedCategoryId(value === 'all' ? null : value);
               setSelectedSubCategoryId(null); // Reset subcategory filter
             }}
-            disabled={!selectedMenuId}
           >
             <SelectTrigger className='w-full sm:w-[180px]'>
               <SelectValue placeholder='Filter by Category' />
             </SelectTrigger>
             <SelectContent align='end'>
               <SelectItem value='all'>All Categories</SelectItem>
-              {filteredCategories.map((category) => (
+              {categories.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   {category.name}
                 </SelectItem>
@@ -282,7 +230,7 @@ export default function ProductsPage() {
             </SelectTrigger>
             <SelectContent align='end'>
               <SelectItem value='all'>All Sub Categories</SelectItem>
-              {filteredSubCategories.map((subCategory) => (
+              {subCategories.map((subCategory) => (
                 <SelectItem key={subCategory.id} value={subCategory.id}>
                   {subCategory.name}
                 </SelectItem>
@@ -306,9 +254,8 @@ export default function ProductsPage() {
                 </DialogTitle>
               </DialogHeader>
               <ProductForm
-                subCategories={subCategories}
                 categories={categories}
-                menus={menus}
+                subCategories={subCategories}
                 initialData={editingProduct || undefined}
                 onSubmit={async (data) => {
                   if (editingProduct) {
@@ -327,9 +274,9 @@ export default function ProductsPage() {
 
       <ProductTable
         products={filteredProducts}
-        subCategories={filteredSubCategories}
-        categories={filteredCategories}
-        menus={menus}
+        subCategories={subCategories}
+        categories={categories}
+        // menus={menus}
         onEdit={(product) => {
           setEditingProduct(product);
           setIsDialogOpen(true);

@@ -1,6 +1,6 @@
 import { SubCategory } from '@/types/sub-category';
 import { Category } from '@/types/category';
-import { Menu } from '@/types/menu';
+// import { Menu } from '@/types/menu';
 import { DraggableTable } from '@/components/ui/draggable-table';
 import { DraggableRow } from '@/components/ui/draggable-row';
 import { TableCell } from '@/components/ui/table';
@@ -17,7 +17,7 @@ import {
 interface SubCategoryTableProps {
   subCategories: SubCategory[];
   categories: Category[];
-  menus: Menu[];
+  // menus: Menu[];
   onEdit: (subCategory: SubCategory) => void;
   onDelete: (subCategory: SubCategory) => void;
   onReorder: (oldIndex: number, newIndex: number) => void;
@@ -27,13 +27,13 @@ interface SubCategoryTableProps {
 export function SubCategoryTable({
   subCategories,
   categories,
-  menus,
+
   onEdit,
   onDelete,
   onReorder,
   onStatusToggle,
 }: SubCategoryTableProps) {
-  const headers = ['S.No', 'Name', 'Menu', 'Category', 'Status', 'Actions'];
+  const headers = ['S.No', 'Name', 'Category', 'Status', 'Actions'];
 
   return (
     <TooltipProvider>
@@ -47,9 +47,6 @@ export function SubCategoryTable({
             const category = categories.find(
               (c) => Number(c.id) === Number(subCategory.categoryId)
             );
-            const menu = category
-              ? menus.find((m) => Number(m.id) === Number(category.menuId))
-              : null;
 
             return (
               <DraggableRow key={subCategory.id} id={subCategory.id}>
@@ -59,7 +56,7 @@ export function SubCategoryTable({
                 <TableCell className='font-medium'>
                   {subCategory.name}
                 </TableCell>
-                <TableCell>{menu?.name || 'Unassigned'}</TableCell>
+                {/* <TableCell>{menu?.name || 'Unassigned'}</TableCell> */}
                 <TableCell>
                   <div className='flex items-center gap-2'>
                     <Layers className='h-4 w-4 text-muted-foreground' />

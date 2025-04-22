@@ -12,36 +12,29 @@ import {
 import { CategoryForm } from '@/components/category/category-form';
 import { CategoryTable } from '@/components/category/category-table';
 import { Category } from '@/types/category';
-import { Menu } from '@/types/menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+// import { Menu } from '@/types/menu';
 import {
   createCategory,
   updateCategory,
   getAllCategories,
   deleteCategory as apiDeleteCategory,
 } from '@/lib/categories-api';
-import { getAllMenus } from '@/lib/menu-api';
+// import { getAllMenus } from '@/lib/menu-api';
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null);
-  const [menus, setMenus] = useState<Menu[]>([]);
+
+  // const [menus, setMenus] = useState<Menu[]>([]);
 
   useEffect(() => {
     async function fetchCategories() {
       setLoading(true);
       try {
         const data = await getAllCategories();
-        const menus = await getAllMenus();
+        // const menus = await getAllMenus();
         setCategories(
           (data?.data || []).map((cat: Category) => ({
             ...cat,
@@ -51,15 +44,15 @@ export default function CategoriesPage() {
                 : cat.status === 'active',
           }))
         );
-        setMenus(
-          (menus?.data || []).map((menu: Menu) => ({
-            ...menu,
-            status:
-              typeof menu.status === 'boolean'
-                ? menu.status
-                : menu.status === 'active',
-          }))
-        );
+        // setMenus(
+        //   (menus?.data || []).map((menu: Menu) => ({
+        //     ...menu,
+        //     status:
+        //       typeof menu.status === 'boolean'
+        //         ? menu.status
+        //         : menu.status === 'active',
+        //   }))
+        // );
       } catch (error) {
         console.error('Failed to fetch categories:', error);
       } finally {
@@ -140,13 +133,6 @@ export default function CategoriesPage() {
     setCategories(updatedCategories);
   };
 
-  // Filter categories based on selected menu
-  const filteredCategories = selectedMenuId
-    ? categories.filter(
-        (category) => category.menuId === Number(selectedMenuId)
-      )
-    : categories;
-
   return (
     <div className='p-4 sm:p-6 md:p-8 w-full max-w-7xl mx-auto'>
       <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 space-y-4 sm:space-y-0 sm:space-x-4'>
@@ -158,23 +144,6 @@ export default function CategoriesPage() {
         </div>
 
         <div className='flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto'>
-          <Select
-            value={selectedMenuId || ''}
-            onValueChange={(value) => setSelectedMenuId(value || null)}
-          >
-            <SelectTrigger className='w-full sm:w-[180px]'>
-              <SelectValue placeholder='Filter by Menu' />
-            </SelectTrigger>
-            <SelectContent align='end'>
-              <SelectItem value='all'>All Menus</SelectItem>
-              {menus?.map((menu) => (
-                <SelectItem key={menu.id} value={menu.id}>
-                  {menu.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button
@@ -192,7 +161,7 @@ export default function CategoriesPage() {
                 </DialogTitle>
               </DialogHeader>
               <CategoryForm
-                menus={menus || []}
+                // menus={menus || []}
                 initialData={editingCategory || undefined}
                 onSubmit={(data) => {
                   if (editingCategory) {
@@ -211,8 +180,8 @@ export default function CategoriesPage() {
       </div>
 
       <CategoryTable
-        categories={filteredCategories}
-        menus={menus}
+        categories={categories}
+        // menus={menus}
         onEdit={(category) => {
           setEditingCategory(category);
           setIsDialogOpen(true);

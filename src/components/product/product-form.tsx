@@ -27,7 +27,7 @@ import { Switch } from '@/components/ui/switch';
 import { X, Plus } from 'lucide-react';
 
 import { Product } from '@/types/product';
-import { Menu } from '@/types/menu';
+// import { Menu } from '@/types/menu';
 import { Category } from '@/types/category';
 import { SubCategory } from '@/types/sub-category';
 
@@ -36,7 +36,7 @@ type ProductFormValues = {
   description?: string;
   price: number;
   displayOrder: number;
-  menuId: number;
+  // menuId: number;
   categoryId: number;
   subCategoryId: number;
   status: boolean;
@@ -53,7 +53,7 @@ const productSchema = z.object({
   displayOrder: z.coerce
     .number()
     .min(0, { message: 'Display order must be non-negative' }),
-  menuId: z.coerce.number({ required_error: 'Please select a menu' }),
+  // menuId: z.coerce.number({ required_error: 'Please select a menu' }),
   categoryId: z.coerce.number({ required_error: 'Please select a category' }),
   subCategoryId: z.coerce.number({
     required_error: 'Please select a sub-category',
@@ -66,7 +66,7 @@ const productSchema = z.object({
 });
 
 type ProductFormProps = {
-  menus: Menu[];
+  // menus: Menu[];
   categories: Category[];
   subCategories: SubCategory[];
   initialData?: Product;
@@ -74,7 +74,7 @@ type ProductFormProps = {
 };
 
 export function ProductForm({
-  menus,
+  // menus,
   categories,
   subCategories,
   initialData,
@@ -92,7 +92,7 @@ export function ProductForm({
       description: initialData?.description || '',
       price: initialData?.price || 0,
       displayOrder: initialData?.displayOrder || 0,
-      menuId: initialData?.menuId || 0,
+      // menuId: initialData?.menuId || 0,
       categoryId: initialData?.categoryId || 0,
       subCategoryId: initialData?.subCategoryId || 0,
       status: initialData?.status || false,
@@ -128,7 +128,6 @@ export function ProductForm({
     const newImageFiles = Array.from(files);
     console.log('Selected Files:', newImageFiles);
 
-    // Create local URLs for preview
     const newImageUrls = newImageFiles.map((file) => URL.createObjectURL(file));
 
     setImageFiles((prev) => [...prev, ...newImageFiles]);
@@ -156,19 +155,13 @@ export function ProductForm({
   };
 
   const handleSubmit: SubmitHandler<ProductFormValues> = (values) => {
-    // Validate required fields
-    if (!values.menuId || !values.categoryId || !values.subCategoryId) {
-      console.error('Missing required selection fields');
-      return;
-    }
-
     // Prepare data for submission
     const submissionData = {
       name: values.name.trim(),
       description: values.description?.trim() || '',
       price: Number(values.price),
       displayOrder: Number(values.displayOrder || 0),
-      menuId: values.menuId,
+      // menuId: values.menuId,
       categoryId: values.categoryId,
       subCategoryId: values.subCategoryId,
       status: values.status,
@@ -180,17 +173,14 @@ export function ProductForm({
       metadata: values.metadata?.trim() || undefined,
     };
 
-    console.log('Submission Data:', submissionData);
-    console.log('Image Files:', imageFiles);
-
     onSubmit(submissionData);
   };
-  console.log('form.getValues', form.getValues('menuId'));
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-          <FormField
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          {/* <FormField
             control={form.control}
             name='menuId'
             render={({ field }) => (
@@ -218,7 +208,7 @@ export function ProductForm({
                 <FormMessage />
               </FormItem>
             )}
-          />
+          /> */}
 
           <FormField
             control={form.control}
@@ -232,24 +222,17 @@ export function ProductForm({
                     field.onChange(value);
                     form.resetField('subCategoryId');
                   }}
-                  disabled={!form.getValues('menuId')}
+                  // disabled={!form.getValues('menuId')}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder='Select Category' />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories
-                      .filter(
-                        (cat) => cat.menuId === Number(form.getValues('menuId'))
-                      )
-                      .map((category) => (
-                        <SelectItem
-                          key={category.id}
-                          value={String(category.id)}
-                        >
-                          {category.name}
-                        </SelectItem>
-                      ))}
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={String(category.id)}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -266,7 +249,7 @@ export function ProductForm({
                 <Select
                   value={field.value ? String(field.value) : ''}
                   onValueChange={field.onChange}
-                  disabled={!form.getValues('categoryId')}
+                  // disabled={!form.getValues('categoryId')}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder='Select Sub Category' />

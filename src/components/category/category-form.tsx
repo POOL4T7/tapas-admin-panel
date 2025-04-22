@@ -17,23 +17,17 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+
 import { Textarea } from '@/components/ui/textarea';
 
 import { Category } from '@/types/category';
-import { Menu } from '@/types/menu';
+// import { Menu } from '@/types/menu';
 import { Switch } from '../ui/switch';
 
 const categorySchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   // menuId: z.string({ required_error: 'Please select a menu' }),
-  menuId: z.coerce.number().min(1, { message: 'Please select a menu' }),
+  // menuId: z.coerce.number().min(1, { message: 'Please select a menu' }),
   description: z.string().optional(),
   status: z.boolean(),
   image: z.string().optional(),
@@ -43,7 +37,7 @@ const categorySchema = z.object({
 });
 
 interface CategoryFormProps {
-  menus: Menu[];
+  // menus: Menu[];
   initialData?: Category;
   onSubmit: (data: Category) => void;
   onCancel?: () => void;
@@ -51,7 +45,7 @@ interface CategoryFormProps {
 }
 
 export function CategoryForm({
-  menus,
+  // menus,
   initialData,
   onSubmit,
   onCancel,
@@ -65,7 +59,7 @@ export function CategoryForm({
     resolver: zodResolver(categorySchema),
     defaultValues: {
       name: initialData?.name || '',
-      menuId: initialData?.menuId || 1,
+      // menuId: initialData?.menuId || 1,
       description: initialData?.description || '',
       status: initialData?.status || false,
       image: initialData?.image,
@@ -108,7 +102,7 @@ export function CategoryForm({
       image: values.image, // Pass the uploaded file
     });
   };
-  console.log(form.getValues('menuId'));
+  // console.log(form.getValues('menuId'));
   return (
     <Form {...form}>
       <form
@@ -116,7 +110,7 @@ export function CategoryForm({
         className='space-y-4 sm:space-y-6'
       >
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-          <FormField
+          {/* <FormField
             control={form.control}
             name='menuId'
             render={({ field }) => (
@@ -153,7 +147,7 @@ export function CategoryForm({
                 <FormMessage className='text-red-500 text-xs sm:text-sm' />
               </FormItem>
             )}
-          />
+          /> */}
 
           <FormField
             control={form.control}

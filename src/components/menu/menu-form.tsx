@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import React, { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -17,6 +18,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Menu } from '@/types/menu';
+import { Category } from '@/types/category';
+import { SubCategory } from '@/types/sub-category';
+import { SelectedCategoryTree } from './SelectedCategoryTree';
 
 const menuSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
@@ -32,6 +36,8 @@ interface MenuFormProps {
   onSubmit: (data: Menu) => void;
   onCancel?: () => void;
   loading?: boolean;
+  categories: Category[];
+  subCategories: SubCategory[];
 }
 
 export function MenuForm({
@@ -39,6 +45,8 @@ export function MenuForm({
   onSubmit,
   onCancel,
   loading,
+  categories,
+  subCategories,
 }: MenuFormProps) {
   const form = useForm<z.infer<typeof menuSchema>>({
     resolver: zodResolver(menuSchema),
@@ -55,6 +63,37 @@ export function MenuForm({
       ...values,
       id: initialData?.id || '', // Preserve existing ID if editing
       description: values.description || '', // Ensure description is always a string
+    });
+  };
+
+  // --- Category & Subcategory Selection State ---
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [selectedPairs, setSelectedPairs] = useState<{ categoryId: string; subCategoryId: string }[]>([]);
+
+  // Filter subcategories by selected category (ensure string comparison)
+  const filteredSubCategories = selectedCategoryId
+    ? subCategories.filter((sc) => String(sc.categoryId) === String(selectedCategoryId))
+    : [];
+
+  // Handle category select
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCategoryId(e.target.value);
+  };
+
+  // Handle subcategory checkbox (always store IDs as strings)
+  const handleSubCategoryChange = (subCategoryId: string, checked: boolean) => {
+    if (!selectedCategoryId) return;
+    setSelectedPairs((prev) => {
+      if (checked) {
+        // Add pair if not exists
+        if (!prev.some((p) => String(p.categoryId) === String(selectedCategoryId) && String(p.subCategoryId) === String(subCategoryId))) {
+          return [...prev, { categoryId: String(selectedCategoryId), subCategoryId: String(subCategoryId) }];
+        }
+        return prev;
+      } else {
+        // Remove pair
+        return prev.filter((p) => !(String(p.categoryId) === String(selectedCategoryId) && String(p.subCategoryId) === String(subCategoryId)));
+      }
     });
   };
 
@@ -155,6 +194,46 @@ export function MenuForm({
             )}
           />
         </div>
+
+        {/* Category & Subcategory Selection */}
+        <div className='mb-4'>
+          <label className='block font-semibold text-sm sm:text-base mb-2'>Category</label>
+          <select
+            value={selectedCategoryId}
+            onChange={handleCategoryChange}
+            className='w-full border rounded p-2 text-sm mb-2'
+          >
+            <option value=''>-- Select Category --</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+
+          {filteredSubCategories.length > 0 && (
+            <div className='ml-2'>
+              <div className='font-semibold text-xs mb-1'>Subcategories:</div>
+              {filteredSubCategories.map((sub) => (
+                <label key={sub.id} className='flex items-center space-x-2 mb-1'>
+                  <input
+                    type='checkbox'
+                    checked={selectedPairs.some((p) => String(p.categoryId) === String(selectedCategoryId) && String(p.subCategoryId) === String(sub.id))}
+                    onChange={(e) => handleSubCategoryChange(sub.id, e.target.checked)}
+                  />
+                  <span className='text-sm'>{sub.name}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Selected Category-Subcategory Tree Display */}
+        <SelectedCategoryTree
+          categories={categories}
+          subCategories={subCategories}
+          selectedPairs={selectedPairs}
+        />
 
         <div className='flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2'>
           {onCancel && (

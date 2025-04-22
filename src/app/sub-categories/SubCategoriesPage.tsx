@@ -13,7 +13,7 @@ import { SubCategoryForm } from '@/components/sub-category/sub-category-form';
 import { SubCategoryTable } from '@/components/sub-category/sub-category-table';
 import { SubCategory } from '@/types/sub-category';
 import { Category } from '@/types/category';
-import { Menu } from '@/types/menu';
+// import { Menu } from '@/types/menu';
 import {
   Select,
   SelectContent,
@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getAllCategories } from '@/lib/categories-api';
-import { getAllMenus } from '@/lib/menu-api';
+// import { getAllMenus } from '@/lib/menu-api';
 import {
   createSubCategory,
   getAllSubCategories,
@@ -33,11 +33,10 @@ export default function SubCategoriesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSubCategory, setEditingSubCategory] =
     useState<SubCategory | null>(null);
-  const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null
   );
-  const [menus, setMenus] = useState<Menu[]>([]);
+  // const [menus, setMenus] = useState<Menu[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,7 +46,7 @@ export default function SubCategoriesPage() {
       setLoading(true);
       try {
         const data = await getAllCategories();
-        const menus = await getAllMenus();
+        // const menus = await getAllMenus();
         const subCategories = await getAllSubCategories();
         setCategories(
           (data?.data || []).map((cat: Category) => ({
@@ -58,15 +57,15 @@ export default function SubCategoriesPage() {
                 : cat.status === 'active',
           }))
         );
-        setMenus(
-          (menus?.data || []).map((menu: Menu) => ({
-            ...menu,
-            status:
-              typeof menu.status === 'boolean'
-                ? menu.status
-                : menu.status === 'active',
-          }))
-        );
+        // setMenus(
+        //   (menus?.data || []).map((menu: Menu) => ({
+        //     ...menu,
+        //     status:
+        //       typeof menu.status === 'boolean'
+        //         ? menu.status
+        //         : menu.status === 'active',
+        //   }))
+        // );
         setSubCategories(
           (subCategories?.data || []).map((sc: SubCategory) => ({
             ...sc,
@@ -85,24 +84,12 @@ export default function SubCategoriesPage() {
     fetchCategories();
   }, []);
 
-  // Filter categories based on selected menu
-  const filteredCategories = selectedMenuId
-    ? categories.filter(
-        (category) => category.menuId === Number(selectedMenuId)
-      )
-    : categories;
-
-  // Filter subcategories based on selected menu and category
+  // Filter subcategories based on selected category
   const filteredSubCategories = subCategories.filter((subCategory) => {
-    const matchesMenu = selectedMenuId
-      ? filteredCategories.some(
-          (cat) => Number(cat.id) === Number(subCategory.categoryId)
-        )
-      : true;
     const matchesCategory = selectedCategoryId
       ? Number(subCategory.categoryId) === Number(selectedCategoryId)
       : true;
-    return matchesMenu && matchesCategory;
+    return matchesCategory;
   });
 
   const handleReorder = (oldIndex: number, newIndex: number) => {
@@ -205,38 +192,17 @@ export default function SubCategoriesPage() {
 
         <div className='flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto'>
           <Select
-            value={selectedMenuId || ''}
-            onValueChange={(value) => {
-              setSelectedMenuId(value === 'all' ? null : value);
-              setSelectedCategoryId(null); // Reset category filter when menu changes
-            }}
-          >
-            <SelectTrigger className='w-full sm:w-[180px]'>
-              <SelectValue placeholder='Filter by Menu' />
-            </SelectTrigger>
-            <SelectContent align='end'>
-              <SelectItem value='all'>All Menus</SelectItem>
-              {menus?.map((menu) => (
-                <SelectItem key={menu.id} value={menu.id}>
-                  {menu.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select
             value={selectedCategoryId || ''}
             onValueChange={(value) =>
               setSelectedCategoryId(value === 'all' ? null : value)
             }
-            disabled={!selectedMenuId}
           >
             <SelectTrigger className='w-full sm:w-[180px]'>
               <SelectValue placeholder='Filter by Category' />
             </SelectTrigger>
             <SelectContent align='end'>
               <SelectItem value='all'>All Categories</SelectItem>
-              {filteredCategories?.map((category) => (
+              {categories?.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   {category.name}
                 </SelectItem>
@@ -255,7 +221,7 @@ export default function SubCategoriesPage() {
                 </DialogTitle>
               </DialogHeader>
               <SubCategoryForm
-                menus={menus || []}
+                // menus={menus || []}
                 categories={categories || []}
                 initialData={editingSubCategory}
                 onSubmit={async (data) => {
@@ -279,8 +245,8 @@ export default function SubCategoriesPage() {
 
       <SubCategoryTable
         subCategories={filteredSubCategories}
-        categories={filteredCategories}
-        menus={menus}
+        categories={categories}
+        // menus={menus}
         onEdit={(subCategory) => {
           setEditingSubCategory(subCategory);
           setIsDialogOpen(true);

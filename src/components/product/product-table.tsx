@@ -1,7 +1,7 @@
 import { Product } from '@/types/product';
 import { SubCategory } from '@/types/sub-category';
 import { Category } from '@/types/category';
-import { Menu } from '@/types/menu';
+// import { Menu } from '@/types/menu';
 import { DraggableTable } from '@/components/ui/draggable-table';
 import { DraggableRow } from '@/components/ui/draggable-row';
 import { TableCell } from '@/components/ui/table';
@@ -19,7 +19,7 @@ interface ProductTableProps {
   products: Product[];
   subCategories: SubCategory[];
   categories: Category[];
-  menus: Menu[];
+
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
   onReorder: (oldIndex: number, newIndex: number) => void;
@@ -30,7 +30,7 @@ export function ProductTable({
   products,
   subCategories,
   categories,
-  menus,
+
   onEdit,
   onDelete,
   onReorder,
@@ -39,7 +39,6 @@ export function ProductTable({
   const headers = [
     'S.No',
     'Name',
-    'Menu',
     'Category',
     'Sub Category',
     'Price',
@@ -71,9 +70,6 @@ export function ProductTable({
                   (c) => Number(c.id) === Number(subCategory.categoryId)
                 )
               : null;
-            const menu = category
-              ? menus.find((m) => Number(m.id) === Number(category.menuId))
-              : null;
 
             return (
               <DraggableRow key={product.id} id={product.id}>
@@ -81,7 +77,7 @@ export function ProductTable({
                   {index + 1}
                 </TableCell>
                 <TableCell className='font-medium'>{product.name}</TableCell>
-                <TableCell>{menu?.name || 'Unassigned'}</TableCell>
+
                 <TableCell>{category?.name || 'Unassigned'}</TableCell>
                 <TableCell>{subCategory?.name || 'Uncategorized'}</TableCell>
                 <TableCell className='font-mono'>

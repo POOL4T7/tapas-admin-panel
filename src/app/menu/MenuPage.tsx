@@ -14,9 +14,15 @@ import {
 import { Plus } from 'lucide-react';
 import { MenuForm } from '@/components/menu/menu-form';
 import { createMenu, updateMenu, getAllMenus } from '@/lib/menu-api';
+import { Category } from '@/types/category';
+import { SubCategory } from '@/types/sub-category';
+import { getAllCategories } from '@/lib/categories-api';
+import { getAllSubCategories } from '@/lib/sub-categories-api';
 
 export default function MenusPage() {
   const [menus, setMenus] = useState<Menu[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMenu, setEditingMenu] = useState<Menu | null>(null);
   const [loading, setLoading] = useState(false);
@@ -26,15 +32,35 @@ export default function MenusPage() {
     async function fetchMenus() {
       setLoading(true);
       try {
-        const data = await getAllMenus();
-        // Convert status to boolean if backend still returns 'active'/'inactive'
+        const data = await getAllCategories();
+        const menus = await getAllMenus();
+        const subCategories = await getAllSubCategories();
+
+        setCategories(
+          (data?.data || []).map((cat: Category) => ({
+            ...cat,
+            status:
+              typeof cat.status === 'boolean'
+                ? cat.status
+                : cat.status === 'active',
+          }))
+        );
         setMenus(
-          (data?.data || []).map((menu: Menu) => ({
+          (menus?.data || []).map((menu: Menu) => ({
             ...menu,
             status:
               typeof menu.status === 'boolean'
                 ? menu.status
                 : menu.status === 'active',
+          }))
+        );
+        setSubCategories(
+          (subCategories?.data || []).map((sc: SubCategory) => ({
+            ...sc,
+            status:
+              typeof sc.status === 'boolean'
+                ? sc.status
+                : sc.status === 'active',
           }))
         );
       } catch (error) {
@@ -131,6 +157,8 @@ export default function MenusPage() {
               </DialogTitle>
             </DialogHeader>
             <MenuForm
+              categories={categories}
+              subCategories={subCategories}
               initialData={editingMenu || undefined}
               onSubmit={editingMenu ? handleEditMenu : handleCreateMenu}
               onCancel={() => {
