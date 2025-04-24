@@ -132,8 +132,8 @@ export default function SubCategoriesPage() {
         updatedCategory.id,
         updatedCategory
       );
-      setCategories((prev) =>
-        prev.map((cat) => (cat.id === updatedCategory.id ? updated?.data : cat))
+      setSubCategories((prev) =>
+        prev.map((sc) => (sc.id === updatedCategory.id ? updated?.data : sc))
       );
       setIsDialogOpen(false);
       setEditingSubCategory(null);
@@ -230,6 +230,7 @@ export default function SubCategoriesPage() {
                   } else {
                     await handleCreateSubCategory(data);
                   }
+
                   setIsDialogOpen(false);
                   setEditingSubCategory(null);
                 }}

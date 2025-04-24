@@ -15,14 +15,14 @@ import { Plus } from 'lucide-react';
 import { MenuForm } from '@/components/menu/menu-form';
 import { createMenu, updateMenu, getAllMenus } from '@/lib/menu-api';
 import { Category } from '@/types/category';
-import { SubCategory } from '@/types/sub-category';
+// import { SubCategory } from '@/types/sub-category';
 import { getAllCategories } from '@/lib/categories-api';
-import { getAllSubCategories } from '@/lib/sub-categories-api';
+// import { getAllSubCategories } from '@/lib/sub-categories-api';
 
 export default function MenusPage() {
   const [menus, setMenus] = useState<Menu[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  // const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMenu, setEditingMenu] = useState<Menu | null>(null);
   const [loading, setLoading] = useState(false);
@@ -34,7 +34,7 @@ export default function MenusPage() {
       try {
         const data = await getAllCategories();
         const menus = await getAllMenus();
-        const subCategories = await getAllSubCategories();
+        // const subCategories = await getAllSubCategories();
 
         setCategories(
           (data?.data || []).map((cat: Category) => ({
@@ -54,15 +54,15 @@ export default function MenusPage() {
                 : menu.status === 'active',
           }))
         );
-        setSubCategories(
-          (subCategories?.data || []).map((sc: SubCategory) => ({
-            ...sc,
-            status:
-              typeof sc.status === 'boolean'
-                ? sc.status
-                : sc.status === 'active',
-          }))
-        );
+        // setSubCategories(
+        //   (subCategories?.data || []).map((sc: SubCategory) => ({
+        //     ...sc,
+        //     status:
+        //       typeof sc.status === 'boolean'
+        //         ? sc.status
+        //         : sc.status === 'active',
+        //   }))
+        // );
       } catch (error) {
         // Optionally handle error
         console.error('Failed to fetch menus:', error);
@@ -150,7 +150,7 @@ export default function MenusPage() {
               Add Menu
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className='w-[90%] md:w-[60%] lg:w-[40%] max-w-4xl max-h-[90vh] overflow-y-auto'>
             <DialogHeader>
               <DialogTitle>
                 {editingMenu ? 'Edit Menu' : 'Create Menu'}
@@ -158,9 +158,20 @@ export default function MenusPage() {
             </DialogHeader>
             <MenuForm
               categories={categories}
-              subCategories={subCategories}
+              // subCategories={subCategories}
               initialData={editingMenu || undefined}
-              onSubmit={editingMenu ? handleEditMenu : handleCreateMenu}
+              onSubmitBasic={editingMenu ? handleEditMenu : handleCreateMenu}
+              onSubmitCategory={async ({ categorySelections }) => {
+                // categorySelections is an array of { categoryId, subCategoryIds }
+                // Implement your API call for category/subcategory here
+                // Example: await saveMenuCategories(editingMenu?.id, categorySelections);
+                console.log(
+                  'Category/Subcategory submitted:',
+                  categorySelections
+                );
+                setIsDialogOpen(false);
+                setEditingMenu(null);
+              }}
               onCancel={() => {
                 setEditingMenu(null);
                 setIsDialogOpen(false);

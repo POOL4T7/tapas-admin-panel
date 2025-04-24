@@ -30,7 +30,9 @@ import { Switch } from '../ui/switch';
 
 const subCategorySchema = z.object({
   // menuId: z.coerce.number({ required_error: 'Please select a menu' }),
-  categoryId: z.coerce.number({ required_error: 'Please select a category' }),
+  categoryId: z.coerce.number().min(1, {
+    message: 'Please select a category',
+  }),
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   description: z.string().optional(),
   displayOrder: z.coerce
@@ -91,12 +93,14 @@ export function SubCategoryForm({
     form.setValue('image', '');
   };
 
-  const handleSubmit = (values: z.infer<typeof subCategorySchema>) => {
-    onSubmit({
+  const handleSubmit = async (values: z.infer<typeof subCategorySchema>) => {
+    await onSubmit({
       ...values,
       id: initialData?.id || '', // Preserve existing ID if editing
     });
   };
+
+  console.log(form.formState.errors);
 
   return (
     <Form {...form}>

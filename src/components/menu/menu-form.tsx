@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -20,6 +20,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Menu } from '@/types/menu';
 import { Category } from '@/types/category';
 import { SubCategory } from '@/types/sub-category';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { subCategoryByCategoryId } from '@/lib/sub-categories-api';
 import { SelectedCategoryTree } from './SelectedCategoryTree';
 
 const menuSchema = z.object({
@@ -28,233 +38,342 @@ const menuSchema = z.object({
   status: z.boolean(),
   displayOrder: z.coerce
     .number()
-    .min(1, { message: 'Display order must be non-negative' }),
+    .min(1, { message: 'Display order must be at least 1' }),
 });
 
 interface MenuFormProps {
   initialData?: Menu;
-  onSubmit: (data: Menu) => void;
+  onSubmitBasic: (data: Menu) => void;
+  onSubmitCategory: (data: {
+    categorySelections: { categoryId: string; subCategoryIds: string[] }[];
+  }) => void;
   onCancel?: () => void;
   loading?: boolean;
   categories: Category[];
-  subCategories: SubCategory[];
+  // subCategories: SubCategory[];
 }
 
 export function MenuForm({
   initialData,
-  onSubmit,
+  onSubmitBasic,
+  onSubmitCategory,
   onCancel,
   loading,
   categories,
-  subCategories,
 }: MenuFormProps) {
+  // Basic Details Form
   const form = useForm<z.infer<typeof menuSchema>>({
     resolver: zodResolver(menuSchema),
     defaultValues: initialData || {
       name: '',
       description: '',
-      status: true, // default to active (true)
+      status: true,
       displayOrder: 1,
     },
   });
 
-  const handleSubmit = (values: z.infer<typeof menuSchema>) => {
-    onSubmit({
+  const handleSubmitBasic = (values: z.infer<typeof menuSchema>) => {
+    onSubmitBasic({
       ...values,
-      id: initialData?.id || '', // Preserve existing ID if editing
-      description: values.description || '', // Ensure description is always a string
+      id: initialData?.id || '',
+      description: values.description || '',
+      categories: [],
+      subCategories: [],
     });
   };
 
-  // --- Category & Subcategory Selection State ---
+  // Category & Subcategory Selection State
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
-  const [selectedPairs, setSelectedPairs] = useState<{ categoryId: string; subCategoryId: string }[]>([]);
+  const [categorySelections, setCategorySelections] = useState<
+    { categoryId: string; subCategoryIds: string[] }[]
+  >([]);
+  const [fetchedSubCategories, setFetchedSubCategories] = useState<
+    SubCategory[]
+  >([]);
 
-  // Filter subcategories by selected category (ensure string comparison)
-  const filteredSubCategories = selectedCategoryId
-    ? subCategories.filter((sc) => String(sc.categoryId) === String(selectedCategoryId))
-    : [];
+  // Fetch subcategories dynamically when category changes
+  useEffect(() => {
+    if (!selectedCategoryId) {
+      setFetchedSubCategories([]);
+      return;
+    }
+    const fetchSubCategories = async () => {
+      try {
+        const data = await subCategoryByCategoryId(selectedCategoryId);
+        setFetchedSubCategories(data?.data || []);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (err) {
+        setFetchedSubCategories([]);
+      }
+    };
+    fetchSubCategories();
+  }, [selectedCategoryId]);
 
-  // Handle category select
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCategoryId(e.target.value);
+  // Initialize with existing data if editing
+  useEffect(() => {
+    if (initialData?.categories) {
+      const initialSelections = initialData.categories.map((cat) => ({
+        categoryId: String(cat.id),
+        subCategoryIds: [], // cat.subCategories?.map((sub) => String(sub.id)) || [],
+      }));
+      setCategorySelections(initialSelections);
+    }
+  }, [initialData]);
+
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategoryId(value);
   };
 
-  // Handle subcategory checkbox (always store IDs as strings)
   const handleSubCategoryChange = (subCategoryId: string, checked: boolean) => {
-    if (!selectedCategoryId) return;
-    setSelectedPairs((prev) => {
-      if (checked) {
-        // Add pair if not exists
-        if (!prev.some((p) => String(p.categoryId) === String(selectedCategoryId) && String(p.subCategoryId) === String(subCategoryId))) {
-          return [...prev, { categoryId: String(selectedCategoryId), subCategoryId: String(subCategoryId) }];
+    setCategorySelections((prev) => {
+      const existingIndex = prev.findIndex(
+        (sel) => sel.categoryId === selectedCategoryId
+      );
+      if (existingIndex >= 0) {
+        // Update existing selection
+        const updated = [...prev];
+        const newSubIds = checked
+          ? [...updated[existingIndex].subCategoryIds, subCategoryId]
+          : updated[existingIndex].subCategoryIds.filter(
+              (id) => id !== subCategoryId
+            );
+        // If no subcategories left, remove the category selection
+        if (newSubIds.length === 0) {
+          updated.splice(existingIndex, 1);
+          return updated;
         }
-        return prev;
-      } else {
-        // Remove pair
-        return prev.filter((p) => !(String(p.categoryId) === String(selectedCategoryId) && String(p.subCategoryId) === String(subCategoryId)));
+        updated[existingIndex] = {
+          categoryId: selectedCategoryId,
+          subCategoryIds: newSubIds,
+        };
+        return updated;
+      } else if (checked) {
+        // Add new selection
+        return [
+          ...prev,
+          { categoryId: selectedCategoryId, subCategoryIds: [subCategoryId] },
+        ];
       }
+      return prev;
+    });
+  };
+
+  const handleSubmitCategory = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (categorySelections.length === 0) return;
+    onSubmitCategory({
+      categorySelections: categorySelections,
     });
   };
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(handleSubmit)}
-        className='space-y-4 sm:space-y-6'
-      >
-        <FormField
-          control={form.control}
-          name='name'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className='font-semibold text-sm sm:text-base'>
-                Menu Name
-              </FormLabel>
-              <FormControl>
-                <Input
-                  placeholder='Enter menu name'
-                  {...field}
-                  className='bg-white text-sm sm:text-base'
-                />
-              </FormControl>
-              <FormMessage className='text-red-500 text-xs sm:text-sm' />
-            </FormItem>
-          )}
-        />
+    <div className='space-y-6'>
+      <Tabs defaultValue='basic' className='w-full'>
+        <TabsList className='grid w-full grid-cols-2'>
+          <TabsTrigger value='basic'>Basic Details</TabsTrigger>
+          <TabsTrigger value='category'>Categories</TabsTrigger>
+        </TabsList>
 
-        <div className='grid grid-cols-1 gap-4'>
-          <FormField
-            control={form.control}
-            name='description'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className='font-semibold text-sm sm:text-base'>
-                  Description
-                </FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder='Enter menu description'
-                    {...field}
-                    className='bg-white text-sm sm:text-base'
-                  />
-                </FormControl>
-                <FormMessage className='text-red-500 text-xs sm:text-sm' />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-          <FormField
-            control={form.control}
-            name='displayOrder'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className='font-semibold text-sm sm:text-base'>
-                  Display Order
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    type='number'
-                    placeholder='Enter display order'
-                    {...field}
-                    value={field.value ?? ''}
-                    className='bg-white text-sm sm:text-base'
-                  />
-                </FormControl>
-                <FormMessage className='text-red-500 text-xs sm:text-sm' />
-              </FormItem>
-            )}
-          />
-
-          {/* Status as Switch */}
-          <FormField
-            control={form.control}
-            name='status'
-            render={({ field }) => (
-              <FormItem className='w-full flex flex-col justify-center'>
-                <FormLabel className='font-semibold text-sm sm:text-base mb-2'>
-                  Status
-                </FormLabel>
-                <div className='flex items-center gap-3'>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      id='menu-status-switch'
-                    />
-                  </FormControl>
-                  <span className='text-sm'>
-                    {field.value ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
-                <FormMessage className='text-red-500 text-xs sm:text-sm mt-1' />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Category & Subcategory Selection */}
-        <div className='mb-4'>
-          <label className='block font-semibold text-sm sm:text-base mb-2'>Category</label>
-          <select
-            value={selectedCategoryId}
-            onChange={handleCategoryChange}
-            className='w-full border rounded p-2 text-sm mb-2'
-          >
-            <option value=''>-- Select Category --</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-
-          {filteredSubCategories.length > 0 && (
-            <div className='ml-2'>
-              <div className='font-semibold text-xs mb-1'>Subcategories:</div>
-              {filteredSubCategories.map((sub) => (
-                <label key={sub.id} className='flex items-center space-x-2 mb-1'>
-                  <input
-                    type='checkbox'
-                    checked={selectedPairs.some((p) => String(p.categoryId) === String(selectedCategoryId) && String(p.subCategoryId) === String(sub.id))}
-                    onChange={(e) => handleSubCategoryChange(sub.id, e.target.checked)}
-                  />
-                  <span className='text-sm'>{sub.name}</span>
-                </label>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Selected Category-Subcategory Tree Display */}
-        <SelectedCategoryTree
-          categories={categories}
-          subCategories={subCategories}
-          selectedPairs={selectedPairs}
-        />
-
-        <div className='flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2'>
-          {onCancel && (
-            <Button
-              type='button'
-              variant='outline'
-              onClick={onCancel}
-              className='w-full sm:w-auto hover:bg-gray-100 text-sm sm:text-base'
+        <TabsContent value='basic'>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(handleSubmitBasic)}
+              className='space-y-6'
             >
-              Cancel
-            </Button>
-          )}
-          <Button
-            type='submit'
-            className='w-full sm:w-auto bg-primary hover:bg-primary-dark transition-colors text-sm sm:text-base'
-            disabled={loading}
-          >
-            Save Menu
-          </Button>
-        </div>
-      </form>
-    </Form>
+              <FormField
+                control={form.control}
+                name='name'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Menu Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Enter menu name' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='description'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder='Enter description'
+                        {...field}
+                        className='min-h-[100px]'
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='displayOrder'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Display Order</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='number'
+                        placeholder='Enter display order'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='status'
+                render={({ field }) => (
+                  <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                    <div className='space-y-0.5'>
+                      <FormLabel className='text-base'>Status</FormLabel>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <div className='flex justify-end gap-4'>
+                {onCancel && (
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={onCancel}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </Button>
+                )}
+                <Button type='submit' disabled={loading}>
+                  {loading ? 'Saving...' : 'Save Menu'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </TabsContent>
+
+        <TabsContent value='category'>
+          <div>
+            <form onSubmit={handleSubmitCategory} className='space-y-8'>
+              <div className='space-y-6'>
+                <div className='space-y-4'>
+                  <div>
+                    <label className='block text-sm font-medium mb-2'>
+                      Category
+                    </label>
+                    <Select
+                      onValueChange={handleCategoryChange}
+                      value={selectedCategoryId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder='Select a category' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.id} value={String(cat.id)}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {fetchedSubCategories.length > 0 && (
+                    <div className='space-y-2'>
+                      <label className='block text-sm font-medium'>
+                        Subcategories
+                      </label>
+                      <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3'>
+                        {fetchedSubCategories.map((sub) => {
+                          const checked =
+                            categorySelections
+                              .find(
+                                (sel) => sel.categoryId === selectedCategoryId
+                              )
+                              ?.subCategoryIds.includes(sub.id) || false;
+                          return (
+                            <div
+                              key={sub.id}
+                              className='flex items-center space-x-2'
+                            >
+                              <Checkbox
+                                id={`sub-${sub.id}`}
+                                checked={checked}
+                                onCheckedChange={(checked) =>
+                                  handleSubCategoryChange(
+                                    sub.id,
+                                    checked as boolean
+                                  )
+                                }
+                              />
+                              <label
+                                htmlFor={`sub-${sub.id}`}
+                                className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                              >
+                                {sub.name}
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Selected Categories & Subcategories Section */}
+              {categorySelections.length > 0 && (
+                <div className='space-y-4'>
+                  <SelectedCategoryTree
+                    categories={categories}
+                    subCategories={fetchedSubCategories}
+                    selectedPairs={categorySelections.flatMap((sel) =>
+                      sel.subCategoryIds.map((subId) => ({
+                        categoryId: sel.categoryId,
+                        subCategoryId: subId,
+                      }))
+                    )}
+                  />
+                </div>
+              )}
+
+              <div className='flex justify-end gap-4'>
+                {onCancel && (
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={onCancel}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </Button>
+                )}
+                <Button
+                  type='submit'
+                  disabled={loading || categorySelections.length === 0}
+                >
+                  {loading ? 'Saving...' : 'Save Categories'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }

@@ -49,3 +49,13 @@ export async function deleteSubCategory(subCategoryId: string) {
     throw error;
   }
 }
+export async function subCategoryByCategoryId(categoryId: string) {
+  try {
+    const response = await api.get(
+      `/api/subcategory/categoryId/${categoryId}`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
