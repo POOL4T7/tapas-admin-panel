@@ -29,10 +29,19 @@ export async function updateMenu(
 // Function to update a menu
 export async function getAllMenus() {
   try {
-    const response = await api.get('/api/menu');
+    const response = await api.get('/api/menu/all');
     return response.data;
   } catch (error) {
     // Handle error as needed (could expand this based on your error handling strategy)
+    throw error;
+  }
+}
+
+export async function getMenuById(menuId: string) {
+  try {
+    const response = await api.get(`api/menu/${menuId}`);
+    return response.data;
+  } catch (error) {
     throw error;
   }
 }

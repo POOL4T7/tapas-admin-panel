@@ -1,5 +1,6 @@
 import { Category } from '@/types/category';
 import { api } from './api';
+import { CategoryMap } from '@/types/menu';
 
 // Function to create a category
 export async function createCategory(categoryData: Omit<Category, 'id'>) {
@@ -40,6 +41,32 @@ export async function getAllCategories() {
 export async function deleteCategory(categoryId: string) {
   try {
     const response = await api.delete(`/api/category/delete/${categoryId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function addMenuEntries(data: CategoryMap) {
+  try {
+    const response = await api.post('/api/menuentry/create', data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function updateMenuEntries(data: CategoryMap) {
+  try {
+    const response = await api.put('/api/menuentry/updatebymenuid', data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+export async function getMenuEntries(menuId: string) {
+  try {
+    const response = await api.get(`/api/menuentry/with-categories/${menuId}`);
     return response.data;
   } catch (error) {
     throw error;

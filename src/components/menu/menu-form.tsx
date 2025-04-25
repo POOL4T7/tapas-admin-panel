@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -30,11 +31,19 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { subCategoryByCategoryId } from '@/lib/sub-categories-api';
+import { getMenuById } from '@/lib/menu-api';
 import { SelectedCategoryTree } from './SelectedCategoryTree';
+import {
+  addMenuEntries,
+  getMenuEntries,
+  updateMenuEntries,
+} from '@/lib/categories-api';
 
 const menuSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   description: z.string().optional(),
+  tagLine: z.string().optional(),
+  metadata: z.string().optional(),
   status: z.boolean(),
   displayOrder: z.coerce
     .number()
@@ -42,56 +51,62 @@ const menuSchema = z.object({
 });
 
 interface MenuFormProps {
-  initialData?: Menu;
   onSubmitBasic: (data: Menu) => void;
-  onSubmitCategory: (data: {
-    categorySelections: { categoryId: string; subCategoryIds: string[] }[];
-  }) => void;
   onCancel?: () => void;
   loading?: boolean;
   categories: Category[];
-  // subCategories: SubCategory[];
+  menuId?: string;
 }
 
 export function MenuForm({
-  initialData,
   onSubmitBasic,
-  onSubmitCategory,
   onCancel,
   loading,
   categories,
+  menuId,
 }: MenuFormProps) {
-  // Basic Details Form
   const form = useForm<z.infer<typeof menuSchema>>({
     resolver: zodResolver(menuSchema),
-    defaultValues: initialData || {
+    defaultValues: {
       name: '',
       description: '',
       status: true,
       displayOrder: 1,
+      metadata: '',
+      tagLine: '',
     },
   });
+
+  const [step, setStep] = useState<'basic' | 'category'>('basic');
 
   const handleSubmitBasic = (values: z.infer<typeof menuSchema>) => {
     onSubmitBasic({
       ...values,
-      id: initialData?.id || '',
+      id: menuId || '',
       description: values.description || '',
-      categories: [],
-      subCategories: [],
+      tagLine: values.tagLine || '',
+      metadata: values.metadata || '',
     });
+    toast.success('Menu details saved!');
+    setStep('category');
   };
 
-  // Category & Subcategory Selection State
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [categorySelections, setCategorySelections] = useState<
-    { categoryId: string; subCategoryIds: string[] }[]
+    {
+      id: number;
+      name: string;
+      subCategoryIds: {
+        id: number;
+        name: string;
+      }[];
+    }[]
   >([]);
   const [fetchedSubCategories, setFetchedSubCategories] = useState<
     SubCategory[]
   >([]);
+  const [isEntitesAdded, setIsEntitesAdded] = useState(false);
 
-  // Fetch subcategories dynamically when category changes
   useEffect(() => {
     if (!selectedCategoryId) {
       setFetchedSubCategories([]);
@@ -101,74 +116,133 @@ export function MenuForm({
       try {
         const data = await subCategoryByCategoryId(selectedCategoryId);
         setFetchedSubCategories(data?.data || []);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
+        console.error('Failed to fetch subcategories:', err);
         setFetchedSubCategories([]);
       }
     };
     fetchSubCategories();
   }, [selectedCategoryId]);
 
-  // Initialize with existing data if editing
   useEffect(() => {
-    if (initialData?.categories) {
-      const initialSelections = initialData.categories.map((cat) => ({
-        categoryId: String(cat.id),
-        subCategoryIds: [], // cat.subCategories?.map((sub) => String(sub.id)) || [],
-      }));
-      setCategorySelections(initialSelections);
+    if (menuId) {
+      const fetchMenuById = async () => {
+        try {
+          const data = await getMenuById(menuId);
+          const categoriesResponse = await getMenuEntries(menuId);
+
+          form.setValue('name', data?.data?.name || '');
+          form.setValue('description', data?.data?.description || '');
+          form.setValue('status', data?.data?.status || true);
+          form.setValue('displayOrder', data?.data?.displayOrder || 1);
+          form.setValue('tagLine', data?.data?.tagLine || '');
+          form.setValue('metadata', data?.data?.metadata || '');
+
+          const initialSelections = categoriesResponse?.data?.categories.map(
+            (cat: {
+              id: number;
+              name: string;
+              subCategories: { id: number; name: string }[];
+            }) => ({
+              id: cat.id,
+              name: cat.name,
+              subCategoryIds: cat.subCategories.map(
+                (sub: { id: number; name: string }) => ({
+                  id: sub.id,
+                  name: sub.name,
+                })
+              ),
+            })
+          );
+          setIsEntitesAdded(initialSelections.length > 0);
+          setCategorySelections(initialSelections);
+        } catch (error) {
+          console.error('Failed to fetch menu by id:', error);
+        }
+      };
+      fetchMenuById();
     }
-  }, [initialData]);
+  }, [menuId]);
 
   const handleCategoryChange = (value: string) => {
     setSelectedCategoryId(value);
   };
 
-  const handleSubCategoryChange = (subCategoryId: string, checked: boolean) => {
+  const handleSubCategoryChange = (subCategoryId: number, checked: boolean) => {
+    const cat = categories.find(
+      (c) => Number(c.id) === Number(selectedCategoryId)
+    );
+    const sub = fetchedSubCategories.find((s) => s.id === subCategoryId);
     setCategorySelections((prev) => {
       const existingIndex = prev.findIndex(
-        (sel) => sel.categoryId === selectedCategoryId
+        (sel) => sel.id === Number(selectedCategoryId)
       );
       if (existingIndex >= 0) {
-        // Update existing selection
         const updated = [...prev];
         const newSubIds = checked
-          ? [...updated[existingIndex].subCategoryIds, subCategoryId]
+          ? [
+              ...updated[existingIndex].subCategoryIds,
+              { id: subCategoryId, name: sub?.name || '' },
+            ]
           : updated[existingIndex].subCategoryIds.filter(
-              (id) => id !== subCategoryId
+              (id) => id.id !== subCategoryId
             );
-        // If no subcategories left, remove the category selection
         if (newSubIds.length === 0) {
           updated.splice(existingIndex, 1);
           return updated;
         }
         updated[existingIndex] = {
-          categoryId: selectedCategoryId,
+          id: Number(selectedCategoryId),
+          name: cat?.name || '',
           subCategoryIds: newSubIds,
         };
         return updated;
-      } else if (checked) {
-        // Add new selection
+      } else {
         return [
           ...prev,
-          { categoryId: selectedCategoryId, subCategoryIds: [subCategoryId] },
+          {
+            id: Number(selectedCategoryId),
+            name: cat?.name || '',
+            subCategoryIds: [{ id: subCategoryId, name: sub?.name || '' }],
+          },
         ];
       }
-      return prev;
     });
   };
 
-  const handleSubmitCategory = (e: React.FormEvent) => {
+  const handleSubmitCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (categorySelections.length === 0) return;
-    onSubmitCategory({
-      categorySelections: categorySelections,
-    });
+    const data = {
+      categorySelections: categorySelections.map((cat) => ({
+        categoryId: cat.id,
+        subCategoryIds: cat.subCategoryIds.map((sub) => sub.id),
+      })),
+      menuId: Number(menuId) || 0,
+    };
+    const res = isEntitesAdded
+      ? await updateMenuEntries(data)
+      : await addMenuEntries(data);
+    console.log(res);
+    toast.success('Categories saved!');
+    if (onCancel) onCancel();
   };
+
+  const selectedCategories = categorySelections.map(
+    ({ id, name, subCategoryIds }) => ({
+      id,
+      name,
+      subCategories: subCategoryIds,
+    })
+  );
 
   return (
     <div className='space-y-6'>
-      <Tabs defaultValue='basic' className='w-full'>
+      <Tabs
+        value={step}
+        onValueChange={(value) => setStep(value as 'basic' | 'category')}
+        className='w-full'
+      >
         <TabsList className='grid w-full grid-cols-2'>
           <TabsTrigger value='basic'>Basic Details</TabsTrigger>
           <TabsTrigger value='category'>Categories</TabsTrigger>
@@ -203,6 +277,38 @@ export function MenuForm({
                     <FormControl>
                       <Textarea
                         placeholder='Enter description'
+                        {...field}
+                        className='min-h-[100px]'
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='tagLine'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tag Line</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Enter tag line' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='metadata'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Metadata</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder='Enter metadata'
                         {...field}
                         className='min-h-[100px]'
                       />
@@ -303,9 +409,11 @@ export function MenuForm({
                           const checked =
                             categorySelections
                               .find(
-                                (sel) => sel.categoryId === selectedCategoryId
+                                (sel) => sel.id === Number(selectedCategoryId)
                               )
-                              ?.subCategoryIds.includes(sub.id) || false;
+                              ?.subCategoryIds.some(
+                                (subId) => subId.id === sub.id
+                              ) || false;
                           return (
                             <div
                               key={sub.id}
@@ -336,18 +444,10 @@ export function MenuForm({
                 </div>
               </div>
 
-              {/* Selected Categories & Subcategories Section */}
-              {categorySelections.length > 0 && (
+              {selectedCategories.length > 0 && (
                 <div className='space-y-4'>
                   <SelectedCategoryTree
-                    categories={categories}
-                    subCategories={fetchedSubCategories}
-                    selectedPairs={categorySelections.flatMap((sel) =>
-                      sel.subCategoryIds.map((subId) => ({
-                        categoryId: sel.categoryId,
-                        subCategoryId: subId,
-                      }))
-                    )}
+                    selectedCategories={selectedCategories}
                   />
                 </div>
               )}

@@ -82,7 +82,7 @@ export default function MenusPage() {
         status: newMenu.status,
       });
       setMenus((prev) => [...prev, created?.data]);
-      setIsDialogOpen(false);
+      // setIsDialogOpen(false);
     } catch (error) {
       console.error('Failed to create menu:', error);
     } finally {
@@ -100,8 +100,8 @@ export default function MenusPage() {
       setMenus((prev) =>
         prev.map((menu) => (menu.id === updatedMenu.id ? updated?.data : menu))
       );
-      setIsDialogOpen(false);
-      setEditingMenu(null);
+      // setIsDialogOpen(false);
+      // setEditingMenu(null);
     } catch (error) {
       console.error('Failed to update menu:', error);
     } finally {
@@ -158,20 +158,8 @@ export default function MenusPage() {
             </DialogHeader>
             <MenuForm
               categories={categories}
-              // subCategories={subCategories}
-              initialData={editingMenu || undefined}
+              menuId={editingMenu?.id}
               onSubmitBasic={editingMenu ? handleEditMenu : handleCreateMenu}
-              onSubmitCategory={async ({ categorySelections }) => {
-                // categorySelections is an array of { categoryId, subCategoryIds }
-                // Implement your API call for category/subcategory here
-                // Example: await saveMenuCategories(editingMenu?.id, categorySelections);
-                console.log(
-                  'Category/Subcategory submitted:',
-                  categorySelections
-                );
-                setIsDialogOpen(false);
-                setEditingMenu(null);
-              }}
               onCancel={() => {
                 setEditingMenu(null);
                 setIsDialogOpen(false);

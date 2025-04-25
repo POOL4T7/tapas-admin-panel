@@ -129,7 +129,7 @@ export default function SubCategoriesPage() {
     setLoading(true);
     try {
       const updated = await updateSubCategory(
-        updatedCategory.id,
+        String(updatedCategory.id),
         updatedCategory
       );
       setSubCategories((prev) =>
@@ -159,7 +159,7 @@ export default function SubCategoriesPage() {
   const toggleStatus = async (category: SubCategory) => {
     setLoading(true);
     try {
-      await updateSubCategory(category.id, {
+      await updateSubCategory(String(category.id), {
         ...category,
         status: !category.status,
       });

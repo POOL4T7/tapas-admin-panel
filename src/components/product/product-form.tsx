@@ -4,6 +4,7 @@ import { useForm, useFieldArray, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -174,6 +175,7 @@ export function ProductForm({
     };
 
     onSubmit(submissionData);
+    toast.success(`${initialData ? 'Product updated' : 'Product created'}!`);
   };
 
   return (

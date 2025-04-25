@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { ImagePlus, Trash2 } from 'lucide-react';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -101,6 +102,7 @@ export function CategoryForm({
       description: values.description || '', // Ensure description is always a string
       image: values.image, // Pass the uploaded file
     });
+    toast.success(`Category ${initialData ? 'updated' : 'created'}!`);
   };
   // console.log(form.getValues('menuId'));
   return (
