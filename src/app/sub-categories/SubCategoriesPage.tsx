@@ -93,22 +93,25 @@ export default function SubCategoriesPage() {
   });
 
   const handleReorder = (oldIndex: number, newIndex: number) => {
-    const newSubCategories = [...filteredSubCategories];
-    const [removed] = newSubCategories.splice(oldIndex, 1);
-    newSubCategories.splice(newIndex, 0, removed);
+    // Get the ids of the filtered subcategories (the visible ones)
+    const filteredIds = filteredSubCategories.map((sc) => sc.id);
+    // Find the corresponding indices in subCategories
+    const oldGlobalIndex = subCategories.findIndex(sc => sc.id === filteredIds[oldIndex]);
+    const newGlobalIndex = subCategories.findIndex(sc => sc.id === filteredIds[newIndex]);
+    if (oldGlobalIndex === -1 || newGlobalIndex === -1) return;
 
-    // Update display orders
+    // Make a copy and reorder
+    const newSubCategories = [...subCategories];
+    const [removed] = newSubCategories.splice(oldGlobalIndex, 1);
+    newSubCategories.splice(newGlobalIndex, 0, removed);
+
+    // Update display orders for all
     const updatedSubCategories = newSubCategories.map((sc, index) => ({
       ...sc,
       displayOrder: index + 1,
     }));
 
-    setSubCategories(
-      subCategories.map((sc) => {
-        const updatedSc = updatedSubCategories.find((u) => u.id === sc.id);
-        return updatedSc ? updatedSc : sc;
-      })
-    );
+    setSubCategories(updatedSubCategories);
   };
 
   const handleCreateSubCategory = async (

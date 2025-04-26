@@ -26,30 +26,24 @@ interface SubCategoryTableProps {
 
 export function SubCategoryTable({
   subCategories,
-  categories,
-
   onEdit,
   onDelete,
   onReorder,
   onStatusToggle,
 }: SubCategoryTableProps) {
-  const headers = ['S.No', 'Name', 'Category', 'Status', 'Actions'];
+  const headers = ['S.No', 'Name', 'Status', 'Actions'];
 
   return (
     <TooltipProvider>
       <div className='rounded-md shadow-sm'>
         <DraggableTable
-          items={subCategories}
+          items={subCategories.map((i) => ({ id: String(i.id) }))}
           onReorder={onReorder}
           headers={headers}
         >
           {subCategories.map((subCategory, index) => {
-            const category = categories.find(
-              (c) => Number(c.id) === Number(subCategory.categoryId)
-            );
-
             return (
-              <DraggableRow key={subCategory.id} id={subCategory.id}>
+              <DraggableRow key={subCategory.id} id={String(subCategory.id)}>
                 <TableCell className='text-center font-mono text-sm'>
                   {index + 1}
                 </TableCell>
@@ -57,12 +51,7 @@ export function SubCategoryTable({
                   {subCategory.name}
                 </TableCell>
                 {/* <TableCell>{menu?.name || 'Unassigned'}</TableCell> */}
-                <TableCell>
-                  <div className='flex items-center gap-2'>
-                    <Layers className='h-4 w-4 text-muted-foreground' />
-                    {category?.name || 'Uncategorized'}
-                  </div>
-                </TableCell>
+
                 <TableCell>
                   <Tooltip>
                     <TooltipTrigger>

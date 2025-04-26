@@ -165,29 +165,36 @@ export default function ProductsPage() {
     }
   };
 
-  if (loading) {
-    console.log(loading);
-    // return <>Loading...</>;
-  }
-
   const handleReorder = (oldIndex: number, newIndex: number) => {
-    const newProducts = [...filteredProducts];
-    const [removed] = newProducts.splice(oldIndex, 1);
-    newProducts.splice(newIndex, 0, removed);
+    // Get the ids of the filtered products (the visible ones)
+    const filteredIds = filteredProducts.map((p) => p.id);
+    // Find the corresponding indices in products
+    const oldGlobalIndex = products.findIndex(
+      (p) => p.id === filteredIds[oldIndex]
+    );
+    const newGlobalIndex = products.findIndex(
+      (p) => p.id === filteredIds[newIndex]
+    );
+    if (oldGlobalIndex === -1 || newGlobalIndex === -1) return;
 
-    // Update display orders
+    // Make a copy and reorder
+    const newProducts = [...products];
+    const [removed] = newProducts.splice(oldGlobalIndex, 1);
+    newProducts.splice(newGlobalIndex, 0, removed);
+
+    // Update display orders for all
     const updatedProducts = newProducts.map((p, index) => ({
       ...p,
       displayOrder: index + 1,
     }));
 
-    setProducts(
-      products.map((p) => {
-        const updatedP = updatedProducts.find((u) => u.id === p.id);
-        return updatedP ? updatedP : p;
-      })
-    );
+    setProducts(updatedProducts);
   };
+
+  if (loading) {
+    console.log(loading);
+    // return <>Loading...</>;
+  }
 
   return (
     <div className='p-4 sm:p-6 md:p-8 w-full max-w-7xl mx-auto'>
@@ -231,7 +238,7 @@ export default function ProductsPage() {
             <SelectContent align='end'>
               <SelectItem value='all'>All Sub Categories</SelectItem>
               {subCategories.map((subCategory) => (
-                <SelectItem key={subCategory.id} value={subCategory.id}>
+                <SelectItem key={subCategory.id} value={`${subCategory.id}`}>
                   {subCategory.name}
                 </SelectItem>
               ))}

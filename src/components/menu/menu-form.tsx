@@ -34,7 +34,7 @@ import { subCategoryByCategoryId } from '@/lib/sub-categories-api';
 import { getMenuById } from '@/lib/menu-api';
 import { SelectedCategoryTree } from './SelectedCategoryTree';
 import {
-  addMenuEntries,
+  // addMenuEntries,
   getMenuEntries,
   updateMenuEntries,
 } from '@/lib/categories-api';
@@ -105,7 +105,7 @@ export function MenuForm({
   const [fetchedSubCategories, setFetchedSubCategories] = useState<
     SubCategory[]
   >([]);
-  const [isEntitesAdded, setIsEntitesAdded] = useState(false);
+  // const [isEntitesAdded, setIsEntitesAdded] = useState(false);
 
   useEffect(() => {
     if (!selectedCategoryId) {
@@ -154,7 +154,7 @@ export function MenuForm({
               ),
             })
           );
-          setIsEntitesAdded(initialSelections.length > 0);
+          // setIsEntitesAdded(initialSelections.length > 0);
           setCategorySelections(initialSelections);
         } catch (error) {
           console.error('Failed to fetch menu by id:', error);
@@ -220,10 +220,11 @@ export function MenuForm({
       })),
       menuId: Number(menuId) || 0,
     };
-    const res = isEntitesAdded
-      ? await updateMenuEntries(data)
-      : await addMenuEntries(data);
-    console.log(res);
+    await updateMenuEntries(data);
+    // const res = isEntitesAdded
+    //   ? await updateMenuEntries(data)
+    //   : await addMenuEntries(data);
+    // console.log(res);
     toast.success('Categories saved!');
     if (onCancel) onCancel();
   };

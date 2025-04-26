@@ -28,23 +28,13 @@ interface ProductTableProps {
 
 export function ProductTable({
   products,
-  subCategories,
-  categories,
 
   onEdit,
   onDelete,
   onReorder,
   onStatusToggle,
 }: ProductTableProps) {
-  const headers = [
-    'S.No',
-    'Name',
-    'Category',
-    'Sub Category',
-    'Price',
-    'Status',
-    'Actions',
-  ];
+  const headers = ['S.No', 'Name', 'Price', 'Status', 'Actions'];
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -62,24 +52,12 @@ export function ProductTable({
           headers={headers}
         >
           {products.map((product, index) => {
-            const subCategory = subCategories.find(
-              (sc) => Number(sc.id) === Number(product.subCategoryId)
-            );
-            const category = subCategory
-              ? categories.find(
-                  (c) => Number(c.id) === Number(subCategory.categoryId)
-                )
-              : null;
-
             return (
               <DraggableRow key={product.id} id={product.id}>
                 <TableCell className='text-center font-mono text-sm'>
                   {index + 1}
                 </TableCell>
                 <TableCell className='font-medium'>{product.name}</TableCell>
-
-                <TableCell>{category?.name || 'Unassigned'}</TableCell>
-                <TableCell>{subCategory?.name || 'Uncategorized'}</TableCell>
                 <TableCell className='font-mono'>
                   {formatPrice(product.price)}
                 </TableCell>
