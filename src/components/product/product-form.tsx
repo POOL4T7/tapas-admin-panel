@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useFieldArray, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -31,6 +31,7 @@ import { Product } from '@/types/product';
 // import { Menu } from '@/types/menu';
 import { Category } from '@/types/category';
 import { SubCategory } from '@/types/sub-category';
+import { subCategoryByCategoryId } from '@/lib/sub-categories-api';
 
 type ProductFormValues = {
   name: string;
@@ -77,7 +78,6 @@ type ProductFormProps = {
 export function ProductForm({
   // menus,
   categories,
-  subCategories,
   initialData,
   onSubmit,
 }: ProductFormProps) {
@@ -85,6 +85,7 @@ export function ProductForm({
   const [imageUrls, setImageUrls] = useState<string[]>(
     initialData?.images || []
   );
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -93,7 +94,6 @@ export function ProductForm({
       description: initialData?.description || '',
       price: initialData?.price || 0,
       displayOrder: initialData?.displayOrder || 0,
-      // menuId: initialData?.menuId || 0,
       categoryId: initialData?.categoryId || 0,
       subCategoryId: initialData?.subCategoryId || 0,
       status: initialData?.status || false,
@@ -121,6 +121,18 @@ export function ProductForm({
     control: form.control,
     name: 'ingredients' as never,
   });
+
+  useEffect(() => {
+    async function fetchSubCategories() {
+      const subCategories = await subCategoryByCategoryId(
+        String(form.watch('categoryId'))
+      );
+      setSubCategories(subCategories?.data || []);
+    }
+    if (form.watch('categoryId') !== 0) {
+      fetchSubCategories();
+    }
+  }, [form.watch('categoryId')]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -251,7 +263,7 @@ export function ProductForm({
                 <Select
                   value={field.value ? String(field.value) : ''}
                   onValueChange={field.onChange}
-                  // disabled={!form.getValues('categoryId')}
+                  disabled={!form.getValues('categoryId')}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder='Select Sub Category' />

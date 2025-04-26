@@ -27,7 +27,6 @@ import { Category } from '@/types/category';
 import { ImagePlus, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { Switch } from '../ui/switch';
-import { toast } from 'sonner';
 
 const subCategorySchema = z.object({
   // menuId: z.coerce.number({ required_error: 'Please select a menu' }),
@@ -99,7 +98,6 @@ export function SubCategoryForm({
       ...values,
       id: initialData?.id || 0, // Preserve existing ID if editing
     });
-    toast.success(`Subcategory ${initialData ? 'updated' : 'created'}!`);
   };
 
   console.log(form.formState.errors);

@@ -93,16 +93,17 @@ const Page = () => {
             : p
         )
       );
-      toast.success('Product status updated');
+      toast.success('Item status updated');
     } catch {
-      toast.error('Failed to update product status');
+      toast.error('Failed to update item status');
     }
   };
 
   return (
     <div>
-      <h1 className='text-2xl font-bold'>
-        List of items for menu {products?.[0]?.menuName}
+      <h1 className='text-2xl font-bold mt-5 mb-5'>
+        List of items for menu{' '}
+        <span className='text-blue-400'>{products?.[0]?.menuName}</span>
       </h1>
 
       <TooltipProvider>

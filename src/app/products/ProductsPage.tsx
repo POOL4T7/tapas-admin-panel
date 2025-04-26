@@ -112,7 +112,7 @@ export default function ProductsPage() {
       const created = await createProduct(newProduct);
       setProducts((prev) => [...prev, created?.data]);
       setIsDialogOpen(false);
-      toast.success('Product created successfully');
+      toast.success('Item created successfully');
     } catch {
       toast.error('Failed to create product');
     } finally {
@@ -129,7 +129,7 @@ export default function ProductsPage() {
       );
       setIsDialogOpen(false);
       setEditingProduct(null);
-      toast.success('Product updated successfully');
+      toast.success('Item updated successfully');
     } catch {
       toast.error('Failed to update product');
     } finally {
@@ -142,7 +142,7 @@ export default function ProductsPage() {
     try {
       // await apiDeleteSubCategory(category.id);
       setProducts(products.filter((p) => p.id !== product.id));
-      toast.success('Product deleted successfully');
+      toast.success('Item deleted successfully');
     } catch {
       toast.error('Failed to delete product');
     } finally {
@@ -162,9 +162,9 @@ export default function ProductsPage() {
           p.id === product.id ? { ...p, status: !p.status } : p
         )
       );
-      toast.success('Product status updated');
+      toast.success('Item status updated');
     } catch {
-      toast.error('Failed to update product status');
+      toast.error('Failed to update item status');
     } finally {
       setLoading(false);
     }
@@ -256,13 +256,13 @@ export default function ProductsPage() {
                 className='w-full sm:w-auto'
                 onClick={() => setEditingProduct(null)}
               >
-                Add Product
+                Add Item
               </Button>
             </DialogTrigger>
             <DialogContent className='w-[90%] max-w-4xl max-h-[90vh] overflow-y-auto'>
               <DialogHeader>
                 <DialogTitle>
-                  {editingProduct ? 'Edit' : 'Add'} Product
+                  {editingProduct ? 'Edit' : 'Add'} Item
                 </DialogTitle>
               </DialogHeader>
               <ProductForm
