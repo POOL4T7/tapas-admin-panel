@@ -50,7 +50,10 @@ export async function getProductsByMenu(menuId: string) {
   }
 }
 
-export async function updateProductByMenuId(productId: string, data: any) {
+export async function updateProductByMenuId(
+  productId: string,
+  data: { itemId: number; active: boolean }[]
+) {
   try {
     const response = await api.put(
       `api/menuentry/itemstatus/update/${productId}`,
