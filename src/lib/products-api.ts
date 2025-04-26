@@ -32,7 +32,7 @@ export async function updateProduct(
 // Function to get all products
 export async function getAllProducts() {
   try {
-    const response = await api.get('/api/item');
+    const response = await api.get('api/item/with-structure');
     return response.data;
   } catch (error) {
     // Handle error as needed (could expand this based on your error handling strategy)

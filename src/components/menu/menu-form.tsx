@@ -217,10 +217,13 @@ export function MenuForm({
   const handleSubmitCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (categorySelections.length === 0) return;
+
     const data = {
       categorySelections: categorySelections.map((cat) => ({
         categoryId: cat.id,
-        subCategoryIds: cat.subCategoryIds.map((sub) => sub.id),
+        subCategoryIds: Array.from(
+          new Set(cat.subCategoryIds.map((sub) => sub.id))
+        ),
       })),
       menuId: Number(menuId) || 0,
     };
