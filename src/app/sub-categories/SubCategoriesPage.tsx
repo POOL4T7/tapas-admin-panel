@@ -28,6 +28,7 @@ import {
   getAllSubCategories,
   updateSubCategory,
 } from '@/lib/sub-categories-api';
+import { toast } from 'sonner';
 
 export default function SubCategoriesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -75,8 +76,8 @@ export default function SubCategoriesPage() {
                 : sc.status === 'active',
           }))
         );
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
+      } catch {
+        console.error('Failed to fetch categories');
       } finally {
         setLoading(false);
       }
@@ -122,8 +123,9 @@ export default function SubCategoriesPage() {
       const created = await createSubCategory(newSubCategory);
       setSubCategories((prev) => [...prev, created?.data]);
       setIsDialogOpen(false);
-    } catch (error) {
-      console.error('Failed to create category:', error);
+      toast.success('Sub-category created successfully');
+    } catch {
+      toast.error('Failed to create sub-category');
     } finally {
       setLoading(false);
     }
@@ -140,8 +142,9 @@ export default function SubCategoriesPage() {
       );
       setIsDialogOpen(false);
       setEditingSubCategory(null);
-    } catch (error) {
-      console.error('Failed to update category:', error);
+      toast.success('Sub-category updated successfully');
+    } catch {
+      toast.error('Failed to update sub-category');
     } finally {
       setLoading(false);
     }
@@ -152,8 +155,9 @@ export default function SubCategoriesPage() {
     try {
       // await apiDeleteSubCategory(category.id);
       setSubCategories(subCategories.filter((sc) => sc.id !== subCategory.id));
-    } catch (error) {
-      console.error('Failed to delete category:', error);
+      toast.success('Sub-category deleted successfully');
+    } catch {
+      toast.error('Failed to delete sub-category');
     } finally {
       setLoading(false);
     }
@@ -171,8 +175,9 @@ export default function SubCategoriesPage() {
           sc.id === category.id ? { ...sc, status: !sc.status } : sc
         )
       );
-    } catch (error) {
-      console.error('Failed to toggle category status:', error);
+      toast.success('Sub-category status updated');
+    } catch {
+      toast.error('Failed to update sub-category status');
     } finally {
       setLoading(false);
     }

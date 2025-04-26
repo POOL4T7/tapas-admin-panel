@@ -12,6 +12,7 @@ import {
 import { CategoryForm } from '@/components/category/category-form';
 import { CategoryTable } from '@/components/category/category-table';
 import { Category } from '@/types/category';
+import { toast } from 'sonner';
 // import { Menu } from '@/types/menu';
 import {
   createCategory,
@@ -53,8 +54,8 @@ export default function CategoriesPage() {
         //         : menu.status === 'active',
         //   }))
         // );
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
+      } catch {
+        console.error('Failed to fetch categories');
       } finally {
         setLoading(false);
       }
@@ -68,8 +69,9 @@ export default function CategoriesPage() {
       const created = await createCategory(newCategory);
       setCategories((prev) => [...prev, created?.data]);
       setIsDialogOpen(false);
-    } catch (error) {
-      console.error('Failed to create category:', error);
+      toast.success('Category created successfully');
+    } catch {
+      toast.error('Failed to create category');
     } finally {
       setLoading(false);
     }
@@ -83,8 +85,9 @@ export default function CategoriesPage() {
       );
       setIsDialogOpen(false);
       setEditingCategory(null);
-    } catch (error) {
-      console.error('Failed to update category:', error);
+      toast.success('Category updated successfully');
+    } catch {
+      toast.error('Failed to update category');
     } finally {
       setLoading(false);
     }
@@ -94,8 +97,9 @@ export default function CategoriesPage() {
     try {
       await apiDeleteCategory(category.id);
       setCategories(categories.filter((c) => c.id !== category.id));
-    } catch (error) {
-      console.error('Failed to delete category:', error);
+      toast.success('Category deleted successfully');
+    } catch {
+      toast.error('Failed to delete category');
     } finally {
       setLoading(false);
     }
@@ -112,8 +116,9 @@ export default function CategoriesPage() {
           c.id === category.id ? { ...c, status: !c.status } : c
         )
       );
-    } catch (error) {
-      console.error('Failed to toggle category status:', error);
+      toast.success('Category status updated');
+    } catch {
+      toast.error('Failed to update category status');
     } finally {
       setLoading(false);
     }

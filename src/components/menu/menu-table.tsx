@@ -5,7 +5,7 @@ import { DraggableTable } from '@/components/ui/draggable-table';
 import { DraggableRow } from '@/components/ui/draggable-row';
 import { TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash, MenuIcon, Info } from 'lucide-react';
+import { Edit, Trash, MenuIcon, Info, Package } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useRouter } from 'next/navigation';
 
 interface MenuTableProps {
   menus: Menu[];
@@ -30,7 +31,7 @@ export function MenuTable({
   onStatusToggle,
 }: MenuTableProps) {
   const headers = ['S.No', 'Name', 'Description', 'Status', 'Actions'];
-
+  const router = useRouter();
   return (
     <TooltipProvider>
       <div className='rounded-md shadow-sm'>
@@ -109,6 +110,19 @@ export function MenuTable({
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Delete Menu</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant='ghost'
+                        size='icon'
+                        onClick={() => router.push(`/menu/${menu.id}`)}
+                        className='h-8 w-8 rounded-full hover:bg-blue-50 text-muted-foreground hover:text-blue-600'
+                      >
+                        <Package className='h-4 w-4' />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>View Menu</TooltipContent>
                   </Tooltip>
                 </div>
               </TableCell>

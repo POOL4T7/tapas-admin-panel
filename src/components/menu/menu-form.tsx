@@ -51,7 +51,7 @@ const menuSchema = z.object({
 });
 
 interface MenuFormProps {
-  onSubmitBasic: (data: Menu) => void;
+  onSubmitBasic: (data: Menu) => Promise<Menu>;
   onCancel?: () => void;
   loading?: boolean;
   categories: Category[];
@@ -63,7 +63,7 @@ export function MenuForm({
   onCancel,
   loading,
   categories,
-  menuId,
+  menuId: oldMenuId,
 }: MenuFormProps) {
   const form = useForm<z.infer<typeof menuSchema>>({
     resolver: zodResolver(menuSchema),
@@ -78,15 +78,18 @@ export function MenuForm({
   });
 
   const [step, setStep] = useState<'basic' | 'category'>('basic');
+  const [menuId, setMenuId] = useState(oldMenuId || '');
 
-  const handleSubmitBasic = (values: z.infer<typeof menuSchema>) => {
-    onSubmitBasic({
+  const handleSubmitBasic = async (values: z.infer<typeof menuSchema>) => {
+    const res = await onSubmitBasic({
       ...values,
       id: menuId || '',
       description: values.description || '',
       tagLine: values.tagLine || '',
       metadata: values.metadata || '',
     });
+    console.log(res);
+    setMenuId(res.id);
     toast.success('Menu details saved!');
     setStep('category');
   };
@@ -125,11 +128,11 @@ export function MenuForm({
   }, [selectedCategoryId]);
 
   useEffect(() => {
-    if (menuId) {
+    if (oldMenuId) {
       const fetchMenuById = async () => {
         try {
-          const data = await getMenuById(menuId);
-          const categoriesResponse = await getMenuEntries(menuId);
+          const data = await getMenuById(oldMenuId);
+          const categoriesResponse = await getMenuEntries(oldMenuId);
 
           form.setValue('name', data?.data?.name || '');
           form.setValue('description', data?.data?.description || '');
@@ -156,13 +159,14 @@ export function MenuForm({
           );
           // setIsEntitesAdded(initialSelections.length > 0);
           setCategorySelections(initialSelections);
+          setMenuId(oldMenuId || '');
         } catch (error) {
           console.error('Failed to fetch menu by id:', error);
         }
       };
       fetchMenuById();
     }
-  }, [menuId]);
+  }, [oldMenuId]);
 
   const handleCategoryChange = (value: string) => {
     setSelectedCategoryId(value);
@@ -246,7 +250,9 @@ export function MenuForm({
       >
         <TabsList className='grid w-full grid-cols-2'>
           <TabsTrigger value='basic'>Basic Details</TabsTrigger>
-          <TabsTrigger value='category'>Categories</TabsTrigger>
+          <TabsTrigger disabled={!menuId} value='category'>
+            Categories
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value='basic'>

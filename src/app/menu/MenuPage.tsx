@@ -82,6 +82,7 @@ export default function MenusPage() {
         status: newMenu.status,
       });
       setMenus((prev) => [...prev, created?.data]);
+      return created?.data;
       // setIsDialogOpen(false);
     } catch (error) {
       console.error('Failed to create menu:', error);
@@ -101,7 +102,8 @@ export default function MenusPage() {
         prev.map((menu) => (menu.id === updatedMenu.id ? updated?.data : menu))
       );
       // setIsDialogOpen(false);
-      // setEditingMenu(null);
+      // setEditingMenu(null);return updated
+      return updated?.data;
     } catch (error) {
       console.error('Failed to update menu:', error);
     } finally {

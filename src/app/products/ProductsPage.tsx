@@ -30,6 +30,7 @@ import {
   getAllProducts,
   updateProduct,
 } from '@/lib/products-api';
+import { toast } from 'sonner';
 
 export default function ProductsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -83,8 +84,8 @@ export default function ProductsPage() {
                 : sc.status === 'active',
           }))
         );
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
+      } catch {
+        console.error('Failed to fetch categories:');
       } finally {
         setLoading(false);
       }
@@ -111,8 +112,9 @@ export default function ProductsPage() {
       const created = await createProduct(newProduct);
       setProducts((prev) => [...prev, created?.data]);
       setIsDialogOpen(false);
-    } catch (error) {
-      console.error('Failed to create category:', error);
+      toast.success('Product created successfully');
+    } catch {
+      toast.error('Failed to create product');
     } finally {
       setLoading(false);
     }
@@ -127,8 +129,9 @@ export default function ProductsPage() {
       );
       setIsDialogOpen(false);
       setEditingProduct(null);
-    } catch (error) {
-      console.error('Failed to update product:', error);
+      toast.success('Product updated successfully');
+    } catch {
+      toast.error('Failed to update product');
     } finally {
       setLoading(false);
     }
@@ -139,8 +142,9 @@ export default function ProductsPage() {
     try {
       // await apiDeleteSubCategory(category.id);
       setProducts(products.filter((p) => p.id !== product.id));
-    } catch (error) {
-      console.error('Failed to delete category:', error);
+      toast.success('Product deleted successfully');
+    } catch {
+      toast.error('Failed to delete product');
     } finally {
       setLoading(false);
     }
@@ -158,8 +162,9 @@ export default function ProductsPage() {
           p.id === product.id ? { ...p, status: !p.status } : p
         )
       );
-    } catch (error) {
-      console.error('Failed to toggle product status:', error);
+      toast.success('Product status updated');
+    } catch {
+      toast.error('Failed to update product status');
     } finally {
       setLoading(false);
     }

@@ -111,66 +111,25 @@ export function CategoryForm({
         onSubmit={form.handleSubmit(handleSubmit)}
         className='space-y-4 sm:space-y-6'
       >
-        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-          {/* <FormField
-            control={form.control}
-            name='menuId'
-            render={({ field }) => (
-              <FormItem className='w-full'>
-                <FormLabel className='font-semibold text-sm sm:text-base'>
-                  Menu
-                </FormLabel>
-                <Select
-                  onValueChange={(value) => field.onChange(value)}
-                  value={field.value ? String(field.value) : ''}
-                >
-                  <FormControl>
-                    <SelectTrigger className='w-full bg-white border-gray-300 focus:border-primary focus:ring-primary text-sm sm:text-base'>
-                      <SelectValue placeholder='Select a menu' />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {menus?.map((menu) => (
-                      <SelectItem
-                        key={menu.id}
-                        value={String(menu.id)}
-                        className='text-sm sm:text-base'
-                      >
-                        {menu.name}
-                      </SelectItem>
-                    ))}
-                    {!menus?.length && (
-                      <SelectItem value='' disabled>
-                        No menus available
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-                <FormMessage className='text-red-500 text-xs sm:text-sm' />
-              </FormItem>
-            )}
-          /> */}
-
-          <FormField
-            control={form.control}
-            name='name'
-            render={({ field }) => (
-              <FormItem className='w-full'>
-                <FormLabel className='font-semibold text-sm sm:text-base'>
-                  Name
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder='Enter category name'
-                    {...field}
-                    className='w-full bg-white text-sm sm:text-base'
-                  />
-                </FormControl>
-                <FormMessage className='text-red-500 text-xs sm:text-sm' />
-              </FormItem>
-            )}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name='name'
+          render={({ field }) => (
+            <FormItem className='w-full'>
+              <FormLabel className='font-semibold text-sm sm:text-base'>
+                Name
+              </FormLabel>
+              <FormControl>
+                <Input
+                  placeholder='Enter category name'
+                  {...field}
+                  className='w-full bg-white text-sm sm:text-base'
+                />
+              </FormControl>
+              <FormMessage className='text-red-500 text-xs sm:text-sm' />
+            </FormItem>
+          )}
+        />
 
         <div className='grid grid-cols-1 gap-4'>
           <FormField

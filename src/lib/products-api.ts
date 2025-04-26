@@ -39,3 +39,26 @@ export async function getAllProducts() {
     throw error;
   }
 }
+
+export async function getProductsByMenu(menuId: string) {
+  try {
+    const response = await api.get(`/api/menuentry/${menuId}`);
+    return response.data;
+  } catch (error) {
+    // Handle error as needed (could expand this based on your error handling strategy)
+    throw error;
+  }
+}
+
+export async function updateProductByMenuId(productId: string, data: any) {
+  try {
+    const response = await api.put(
+      `api/menuentry/itemstatus/update/${productId}`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    // Handle error as needed (could expand this based on your error handling strategy)
+    throw error;
+  }
+}

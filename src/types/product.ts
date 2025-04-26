@@ -14,3 +14,21 @@ export type Product = {
   images?: string[];
   metadata?: string;
 };
+
+export type MenuProduct = {
+  menuId: number;
+  menuName: string;
+  categoryId: number;
+  categoryName: string;
+  subCategoryId: number;
+  subCategoryName: string;
+  item: {
+    id: number;
+    name: string;
+    description: string;
+    imagePath: string | null;
+    price: number;
+    displayOrder: number | null;
+    status: boolean;
+  };
+};
