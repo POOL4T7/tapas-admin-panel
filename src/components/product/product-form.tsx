@@ -257,19 +257,14 @@ export function ProductForm({
                     <SelectValue placeholder='Select Sub Category' />
                   </SelectTrigger>
                   <SelectContent>
-                    {subCategories
-                      .filter(
-                        (sc) =>
-                          sc.categoryId === Number(form.getValues('categoryId'))
-                      )
-                      .map((subCategory) => (
-                        <SelectItem
-                          key={subCategory.id}
-                          value={String(subCategory.id)}
-                        >
-                          {subCategory.name}
-                        </SelectItem>
-                      ))}
+                    {subCategories.map((subCategory) => (
+                      <SelectItem
+                        key={subCategory.id}
+                        value={String(subCategory.id)}
+                      >
+                        {subCategory.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
