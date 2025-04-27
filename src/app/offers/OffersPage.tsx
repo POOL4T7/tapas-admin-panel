@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,72 +12,100 @@ import OfferForm from '@/components/offer/OfferForm';
 import OfferTable from '@/components/offer/OfferTable';
 import { Offer } from '@/types/offer';
 import type { OfferFormValues } from '@/components/offer/OfferForm';
+import {
+  getOffers,
+  createOffer,
+  updateOffer,
+  deleteOffer,
+} from '@/lib/offer-api';
+import { getAllMenus } from '@/lib/menu-api';
 
 const emptyOffer = (): Offer => ({
   id: Date.now(),
   name: '',
+  menuId: 0,
+  foodItemsInfo: '',
+  foodItemsPrice: '',
+  foodItemsImagePaths: [],
+  drinkItemsInfo: '',
+  drinkItemsPrice: '',
+  drinkItemsImagePaths: [],
+  offerImagePath: null,
   description: '',
-  startDate: new Date(),
-  endDate: new Date(),
-  discountPercentage: 0,
   status: true,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  drinks: [],
-  foods: [],
 });
 
 export default function OffersPage() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [menus, setMenus] = useState([]);
 
-  const handleCreateOffer = (data: OfferFormValues) => {
-    setOffers((prev) => [
-      ...prev,
-      {
-        ...data,
-        id: Date.now(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        startDate: new Date(data.startDate),
-        endDate: new Date(data.endDate),
-      },
-    ]);
-    setIsDialogOpen(false);
-    setEditingOffer(null);
+  useEffect(() => {
+    setLoading(true);
+    getAllMenus().then((data) => setMenus(data.data));
+    getOffers()
+      .then((data) => setOffers(data.data))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleCreateOffer = async (data: OfferFormValues) => {
+    setLoading(true);
+    try {
+      const created = await createOffer(data);
+      setOffers((prev) => [
+        ...prev,
+        {
+          ...created,
+        },
+      ]);
+      setIsDialogOpen(false);
+      setEditingOffer(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEditOffer = (data: OfferFormValues) => {
-    setOffers((prev) =>
-      prev.map((o) =>
-        o.id === data.id
-          ? {
-              ...o,
-              ...data,
-              updatedAt: new Date(),
-              startDate: new Date(data.startDate),
-              endDate: new Date(data.endDate),
-            }
-          : o
-      )
-    );
-    setIsDialogOpen(false);
-    setEditingOffer(null);
+  const handleEditOffer = async (data: OfferFormValues) => {
+    setLoading(true);
+    try {
+      await updateOffer(data.id!, data);
+      setOffers((prev) =>
+        prev.map((o) =>
+          o.id === data.id
+            ? {
+                id: data.id,
+                name: data.name,
+                menuId: data.menuId,
+                foodItemsInfo: data.foodItemsInfo,
+                foodItemsPrice: data.foodItemsPrice,
+                foodItemsImagePaths: data.foodItemsImagePaths,
+                drinkItemsInfo: data.drinkItemsInfo,
+                drinkItemsPrice: data.drinkItemsPrice,
+                drinkItemsImagePaths: data.drinkItemsImagePaths,
+                offerImagePath: data.offerImagePath,
+                description: data.description,
+                status: data.status,
+              }
+            : o
+        )
+      );
+      setIsDialogOpen(false);
+      setEditingOffer(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteOffer = (offer: Offer) => {
-    setOffers((prev) => prev.filter((o) => o.id !== offer.id));
-  };
-
-  const toggleStatus = (offer: Offer) => {
-    setOffers((prev) =>
-      prev.map((o) =>
-        o.id === offer.id
-          ? { ...o, status: !o.status, updatedAt: new Date() }
-          : o
-      )
-    );
+  const handleDeleteOffer = async (offer: Offer) => {
+    setLoading(true);
+    try {
+      await deleteOffer(offer.id);
+      setOffers((prev) => prev.filter((o) => o.id !== offer.id));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReorder = (oldIndex: number, newIndex: number) => {
@@ -87,6 +115,19 @@ export default function OffersPage() {
       next.splice(newIndex, 0, moved);
       return next;
     });
+  };
+
+  const toggleStatus = async (offer: Offer) => {
+    setLoading(true);
+    try {
+      const updated = await updateOffer(offer.id, {
+        ...offer,
+        status: !offer.status,
+      });
+      setOffers((prev) => prev.map((o) => (o.id === offer.id ? updated : o)));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -109,13 +150,13 @@ export default function OffersPage() {
                 Add Offer
               </Button>
             </DialogTrigger>
-            <DialogContent className='w-[90%] max-w-4xl max-h-[90vh] overflow-y-auto'>
+            <DialogContent className='w-[90%] max-w-xl max-h-[90vh] overflow-y-auto'>
               <DialogHeader>
                 <DialogTitle>{editingOffer ? 'Edit' : 'Add'} Offer</DialogTitle>
               </DialogHeader>
               <OfferForm
                 offer={editingOffer || emptyOffer()}
-                // onChange={() => {}}
+                menus={menus}
                 onSubmit={(values) => {
                   if (editingOffer) {
                     handleEditOffer({ ...editingOffer, ...values });
@@ -143,6 +184,7 @@ export default function OffersPage() {
         onReorder={handleReorder}
         onStatusToggle={toggleStatus}
       />
+      {loading && <div className='mt-4 text-center'>Loading...</div>}
     </div>
   );
 }

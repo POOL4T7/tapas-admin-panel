@@ -1,5 +1,5 @@
 'use client';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -14,94 +14,106 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
-import { X, Plus } from 'lucide-react';
 import React from 'react';
-import { Offer, Item } from '@/types/offer';
-
-// Match the Offer/Item types (createdAt/updatedAt optional for form, required in final object)
-const itemSchema = z.object({
-  id: z.number(),
-  name: z.string().min(1, 'Required'),
-  price: z.coerce.number().min(0, 'Must be non-negative'),
-  image: z.string(),
-  description: z.string(),
-  createdAt: z.any().optional(),
-  updatedAt: z.any().optional(),
-  status: z.boolean(),
-});
+import { Offer } from '@/types/offer';
+import { uploadOfferImage } from '@/lib/offer-api';
+import { Menu } from '@/types/menu';
+import Image from 'next/image';
 
 const offerSchema = z.object({
   id: z.number().optional(),
   name: z.string().min(1, 'Required'),
+  menuId: z.number(),
+  foodItemsInfo: z.string(),
+  foodItemsPrice: z.string(),
+  foodItemsImagePaths: z.array(z.string()),
+  drinkItemsInfo: z.string(),
+  drinkItemsPrice: z.string(),
+  drinkItemsImagePaths: z.array(z.string()),
+  offerImagePath: z.string().nullable(),
   description: z.string().min(1, 'Required'),
-  startDate: z.string().min(1, 'Required'),
-  endDate: z.string().min(1, 'Required'),
-  discountPercentage: z.coerce.number().min(0).max(100),
   status: z.boolean(),
-  createdAt: z.any().optional(),
-  updatedAt: z.any().optional(),
-  drinks: z.array(itemSchema),
-  foods: z.array(itemSchema),
 });
 
 export type OfferFormValues = z.infer<typeof offerSchema>;
 
 interface OfferFormProps {
   offer: Offer;
-  // onChange: (offer: Offer) => void;
   onSubmit: (offer: OfferFormValues) => void;
   onCancel: () => void;
   editing: boolean;
+  menus: Menu[];
 }
-
-const emptyItem = (): Item => ({
-  id: Date.now(),
-  name: '',
-  price: 0,
-  image: '',
-  description: '',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  status: true,
-});
 
 const OfferForm: React.FC<OfferFormProps> = ({
   offer,
-  // onChange,
   onSubmit,
   onCancel,
   editing,
+  menus,
 }) => {
   const form = useForm<OfferFormValues>({
     resolver: zodResolver(offerSchema),
     defaultValues: {
       ...offer,
-      startDate: offer.startDate
-        ? new Date(offer.startDate).toISOString().split('T')[0]
-        : '',
-      endDate: offer.endDate
-        ? new Date(offer.endDate).toISOString().split('T')[0]
-        : '',
-      drinks: offer.drinks || [],
-      foods: offer.foods || [],
+      foodItemsImagePaths: offer.foodItemsImagePaths || [],
+      drinkItemsImagePaths: offer.drinkItemsImagePaths || [],
+      offerImagePath: offer.offerImagePath || null,
     },
     mode: 'onChange',
   });
 
-  const drinksArray = useFieldArray({
-    control: form.control,
-    name: 'drinks',
-  });
+  // Remove image by index
+  const removeImage = (
+    type: 'foodItemsImagePaths' | 'drinkItemsImagePaths',
+    idx: number
+  ) => {
+    const current = form.getValues(type) || [];
+    form.setValue(
+      type,
+      current.filter((_: string, i: number) => i !== idx)
+    );
+  };
 
-  const foodsArray = useFieldArray({
-    control: form.control,
-    name: 'foods',
-  });
+  // Remove offer image
+  const removeOfferImage = () => {
+    form.setValue('offerImagePath', null);
+  };
 
-  // Call onChange for live preview if needed
-  // React.useEffect(() => {
-  //   onChange(form.getValues() as Offer);
-  // }, [form.watch()]);
+  // Handle file input for food images
+  const handleFoodImagesChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    const urls = await uploadOfferImage(files, 'food');
+    const prev = form.getValues('foodItemsImagePaths') || [];
+    form.setValue('foodItemsImagePaths', [...prev, ...urls]);
+    e.target.value = '';
+  };
+
+  // Handle file input for drink images
+  const handleDrinkImagesChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    const urls = await uploadOfferImage(files, 'drink');
+    const prev = form.getValues('drinkItemsImagePaths') || [];
+    form.setValue('drinkItemsImagePaths', [...prev, ...urls]);
+    e.target.value = '';
+  };
+
+  // Handle file input for offer image (single)
+  const handleOfferImageChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    const urls = await uploadOfferImage(files, 'offer');
+    form.setValue('offerImagePath', urls[0] || null);
+    e.target.value = '';
+  };
 
   const handleSubmit = form.handleSubmit((data) => {
     onSubmit(data);
@@ -109,20 +121,38 @@ const OfferForm: React.FC<OfferFormProps> = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit} className='space-y-4'>
-        <FormField
-          control={form.control}
-          name='name'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <form onSubmit={handleSubmit} className='space-y-6'>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+          <FormField
+            control={form.control}
+            name='name'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Offer Name</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder='Offer name' />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div>
+            <FormLabel>Menu</FormLabel>
+            <select
+              className='block w-full rounded border px-3 py-2 text-gray-700'
+              value={form.watch('menuId') || ''}
+              onChange={(e) => form.setValue('menuId', Number(e.target.value))}
+            >
+              <option value=''>Select Menu</option>
+              {menus?.map((menu) => (
+                <option key={menu.id} value={menu.id}>
+                  {menu.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         <FormField
           control={form.control}
           name='description'
@@ -130,21 +160,68 @@ const OfferForm: React.FC<OfferFormProps> = ({
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea {...field} />
+                <Textarea
+                  {...field}
+                  placeholder='Write a short description...'
+                  rows={4}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <div className='flex gap-4'>
+        {/* Offer Image Upload */}
+        <div>
+          <FormLabel>Offer Image</FormLabel>
+          <label className='block w-fit cursor-pointer px-4 py-2 border border-gray-300 rounded bg-white hover:bg-gray-50'>
+            <span>Select Image</span>
+            <input
+              type='file'
+              accept='image/*'
+              onChange={handleOfferImageChange}
+              className='hidden'
+            />
+          </label>
+          {form.watch('offerImagePath') && (
+            <div className='relative mt-2'>
+              <Image
+                src={
+                  process.env.NEXT_PUBLIC_SERVER_URL +
+                  (form.watch('offerImagePath') || '')
+                }
+                alt='Offer'
+                width={80}
+                height={80}
+                className='w-20 h-20 object-cover rounded border'
+              />
+              <button
+                type='button'
+                className='absolute top-0 right-0 bg-white bg-opacity-80 text-red-600 rounded-full p-1 shadow hover:bg-opacity-100'
+                onClick={removeOfferImage}
+                aria-label='Remove image'
+              >
+                ×
+              </button>
+            </div>
+          )}
+        </div>
+        {/* Food Items Section */}
+        <div className='p-4 rounded-lg border bg-gray-50'>
+          <h3 className='font-semibold text-lg mb-4 text-gray-700'>
+            Food Items
+          </h3>
           <FormField
             control={form.control}
-            name='startDate'
+            name='foodItemsInfo'
             render={({ field }) => (
-              <FormItem className='flex-1'>
-                <FormLabel>Start Date</FormLabel>
+              <FormItem>
+                <FormLabel>Food Items Info</FormLabel>
                 <FormControl>
-                  <Input type='date' {...field} />
+                  <Textarea
+                    {...field}
+                    placeholder='Describe the food items...'
+                    rows={3}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -152,255 +229,147 @@ const OfferForm: React.FC<OfferFormProps> = ({
           />
           <FormField
             control={form.control}
-            name='endDate'
+            name='foodItemsPrice'
             render={({ field }) => (
-              <FormItem className='flex-1'>
-                <FormLabel>End Date</FormLabel>
+              <FormItem>
+                <FormLabel>Food Items Price</FormLabel>
                 <FormControl>
-                  <Input type='date' {...field} />
+                  <Input
+                    {...field}
+                    placeholder='Price (comma separated for multiple)'
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormLabel>Food Item Images</FormLabel>
+          <label className='block w-fit cursor-pointer px-4 py-2 border border-gray-300 rounded bg-white hover:bg-gray-50'>
+            <span>Select Images</span>
+            <input
+              type='file'
+              accept='image/*'
+              multiple
+              onChange={handleFoodImagesChange}
+              className='hidden'
+            />
+          </label>
+          <div className='flex gap-2 mt-2'>
+            {(form.watch('foodItemsImagePaths') || []).map((src, idx) => (
+              <div key={idx} className='relative'>
+                <Image
+                  src={process.env.NEXT_PUBLIC_SERVER_URL + src}
+                  alt={`Food Item Preview ${idx + 1}`}
+                  width={80}
+                  height={80}
+                  className='w-20 h-20 object-cover rounded border'
+                />
+                <button
+                  type='button'
+                  className='absolute top-0 right-0 bg-white bg-opacity-80 text-red-600 rounded-full p-1 shadow hover:bg-opacity-100'
+                  onClick={() => removeImage('foodItemsImagePaths', idx)}
+                  aria-label='Remove image'
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* Drink Items Section */}
+        <div className='p-4 rounded-lg border bg-gray-50'>
+          <h3 className='font-semibold text-lg mb-4 text-gray-700'>
+            Drink Items
+          </h3>
+          <FormField
+            control={form.control}
+            name='drinkItemsInfo'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Drink Items Info</FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder='Describe the drink items...'
+                    rows={3}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='drinkItemsPrice'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Drink Items Price</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder='Price (comma separated for multiple)'
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormLabel>Drink Item Images</FormLabel>
+          <label className='block w-fit cursor-pointer px-4 py-2 border border-gray-300 rounded bg-white hover:bg-gray-50'>
+            <span>Select Images</span>
+            <input
+              type='file'
+              accept='image/*'
+              multiple
+              onChange={handleDrinkImagesChange}
+              className='hidden'
+            />
+          </label>
+          <div className='flex gap-2 mt-2'>
+            {(form.watch('drinkItemsImagePaths') || []).map((src, idx) => (
+              <div key={idx} className='relative'>
+                <Image
+                  src={process.env.NEXT_PUBLIC_SERVER_URL + src}
+                  alt={`Drink Item Preview ${idx + 1}`}
+                  width={80}
+                  height={80}
+                  className='w-20 h-20 object-cover rounded border'
+                />
+                <button
+                  type='button'
+                  className='absolute top-0 right-0 bg-white bg-opacity-80 text-red-600 rounded-full p-1 shadow hover:bg-opacity-100'
+                  onClick={() => removeImage('drinkItemsImagePaths', idx)}
+                  aria-label='Remove image'
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className='flex flex-col md:flex-row md:items-center gap-4'>
+          <FormField
+            control={form.control}
+            name='status'
+            render={({ field }) => (
+              <FormItem className='flex flex-row items-center gap-2'>
+                <FormLabel>Status</FormLabel>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
-        <FormField
-          control={form.control}
-          name='discountPercentage'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Discount %</FormLabel>
-              <FormControl>
-                <Input type='number' min={0} max={100} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name='status'
-          render={({ field }) => (
-            <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
-              <div className='space-y-0.5'>
-                <FormLabel className='text-base'>Status</FormLabel>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <div>
-          <h4 className='font-semibold mb-2'>Drinks</h4>
-          {drinksArray.fields.map((field, idx) => (
-            <div
-              key={field.id}
-              className='border p-4 mb-4 rounded-lg space-y-4'
-            >
-              <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
-                <FormField
-                  control={form.control}
-                  name={`drinks.${idx}.name`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name={`drinks.${idx}.price`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price</FormLabel>
-                      <FormControl>
-                        <Input type='number' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name={`drinks.${idx}.image`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Image URL</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name={`drinks.${idx}.status`}
-                  render={({ field }) => (
-                    <FormItem className='flex flex-col justify-end'>
-                      <FormLabel>Status</FormLabel>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name={`drinks.${idx}.description`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className='flex justify-end'>
-                <Button
-                  type='button'
-                  variant='destructive'
-                  size='sm'
-                  onClick={() => drinksArray.remove(idx)}
-                >
-                  <X className='h-4 w-4 mr-2' />
-                  Remove Drink
-                </Button>
-              </div>
-            </div>
-          ))}
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => drinksArray.append(emptyItem())}
-            className='mt-2'
-          >
-            <Plus className='mr-2 h-4 w-4' />
-            Add Drink
-          </Button>
-        </div>
-        <div>
-          <h4 className='font-semibold mb-2'>Foods</h4>
-          {foodsArray.fields.map((field, idx) => (
-            <div
-              key={field.id}
-              className='border p-4 mb-4 rounded-lg space-y-4'
-            >
-              <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
-                <FormField
-                  control={form.control}
-                  name={`foods.${idx}.name`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name={`foods.${idx}.price`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price</FormLabel>
-                      <FormControl>
-                        <Input type='number' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name={`foods.${idx}.image`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Image URL</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name={`foods.${idx}.status`}
-                  render={({ field }) => (
-                    <FormItem className='flex flex-col justify-end'>
-                      <FormLabel>Status</FormLabel>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name={`foods.${idx}.description`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className='flex justify-end'>
-                <Button
-                  type='button'
-                  variant='destructive'
-                  size='sm'
-                  onClick={() => foodsArray.remove(idx)}
-                >
-                  <X className='h-4 w-4 mr-2' />
-                  Remove Food
-                </Button>
-              </div>
-            </div>
-          ))}
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => foodsArray.append(emptyItem())}
-            className='mt-2'
-          >
-            <Plus className='mr-2 h-4 w-4' />
-            Add Food
-          </Button>
-        </div>
-        <div className='flex gap-2 justify-end mt-4'>
-          <Button type='submit'>
-            {editing ? 'Update Offer' : 'Create Offer'}
-          </Button>
+        <div className='flex justify-end gap-2'>
           <Button type='button' variant='outline' onClick={onCancel}>
             Cancel
           </Button>
+          <Button type='submit'>{editing ? 'Update' : 'Create'} Offer</Button>
         </div>
       </form>
     </Form>

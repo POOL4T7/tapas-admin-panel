@@ -1,3 +1,4 @@
+'use client';
 import { Offer } from '@/types/offer';
 import { DraggableTable } from '@/components/ui/draggable-table';
 import { DraggableRow } from '@/components/ui/draggable-row';
@@ -11,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import Image from 'next/image';
 import React from 'react';
 
 interface OfferTableProps {
@@ -31,12 +33,13 @@ export function OfferTable({
   const headers = [
     'S.No',
     'Name',
+    'Menu ID',
+    'Offer Image',
     'Description',
-    'Start Date',
-    'End Date',
-    'Discount %',
-    'Drinks',
-    'Foods',
+    'Food Info',
+    'Food Price',
+    'Drink Info',
+    'Drink Price',
     'Status',
     'Actions',
   ];
@@ -47,7 +50,7 @@ export function OfferTable({
     <TooltipProvider>
       <div className='rounded-md shadow-sm'>
         <DraggableTable
-          items={offers.map(o => ({ ...o, id: String(o.id) }))}
+          items={offers.map((o) => ({ id: String(o.id) }))}
           onReorder={handleReorder}
           headers={headers}
         >
@@ -57,18 +60,41 @@ export function OfferTable({
                 {index + 1}
               </TableCell>
               <TableCell className='font-medium'>{offer.name}</TableCell>
-              <TableCell className='truncate max-w-xs'>{offer.description}</TableCell>
-              <TableCell>{offer.startDate ? new Date(offer.startDate).toISOString().substr(0, 10) : ''}</TableCell>
-              <TableCell>{offer.endDate ? new Date(offer.endDate).toISOString().substr(0, 10) : ''}</TableCell>
-              <TableCell>{offer.discountPercentage}</TableCell>
-              <TableCell>{offer.drinks?.length ?? 0}</TableCell>
-              <TableCell>{offer.foods?.length ?? 0}</TableCell>
+              <TableCell>{offer.menuId}</TableCell>
+              <TableCell>
+                {offer.offerImagePath && (
+                  <Image
+                    src={
+                      process.env.NEXT_PUBLIC_SERVER_URL + offer.offerImagePath
+                    }
+                    alt='Offer'
+                    width={50}
+                    height={50}
+                    className='rounded border object-cover'
+                  />
+                )}
+              </TableCell>
+              <TableCell className='truncate max-w-xs'>
+                {offer.description}
+              </TableCell>
+              <TableCell className='truncate max-w-xs'>
+                {offer.foodItemsInfo}
+              </TableCell>
+              <TableCell>{offer.foodItemsPrice}</TableCell>
+              <TableCell className='truncate max-w-xs'>
+                {offer.drinkItemsInfo}
+              </TableCell>
+              <TableCell>{offer.drinkItemsPrice}</TableCell>
               <TableCell>
                 <Tooltip>
                   <TooltipTrigger>
                     <Switch
                       checked={!!offer.status}
-                      onCheckedChange={onStatusToggle ? (checked) => onStatusToggle(offer, checked) : undefined}
+                      onCheckedChange={
+                        onStatusToggle
+                          ? (checked) => onStatusToggle(offer, checked)
+                          : undefined
+                      }
                     />
                   </TooltipTrigger>
                   <TooltipContent>
@@ -117,7 +143,9 @@ export function OfferTable({
               <Gift className='h-6 w-6 text-slate-400' />
             </div>
             <h3 className='text-lg font-medium'>No offers found</h3>
-            <p className='text-sm text-muted-foreground mt-1'>Create an offer to get started</p>
+            <p className='text-sm text-muted-foreground mt-1'>
+              Create an offer to get started
+            </p>
           </div>
         )}
       </div>

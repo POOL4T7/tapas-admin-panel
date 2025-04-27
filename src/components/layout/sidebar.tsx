@@ -37,6 +37,11 @@ const sidebarLinks = [
     icon: Package,
     href: '/products',
   },
+  {
+    title: 'Offers',
+    icon: Package,
+    href: '/offers',
+  },
   // {
   //   title: 'Customers',
   //   icon: Users,
