@@ -142,20 +142,6 @@ export default function CategoriesPage() {
     }
   };
 
-  const handleReorder = (oldIndex: number, newIndex: number) => {
-    const newCategories = [...categories];
-    const [removed] = newCategories.splice(oldIndex, 1);
-    newCategories.splice(newIndex, 0, removed);
-
-    // Update display orders
-    const updatedCategories = newCategories.map((c, index) => ({
-      ...c,
-      displayOrder: index + 1,
-    }));
-
-    setCategories(updatedCategories);
-  };
-
   return (
     <div className='p-4 sm:p-6 md:p-8 w-full max-w-7xl mx-auto'>
       <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 space-y-4 sm:space-y-0 sm:space-x-4'>
@@ -210,7 +196,6 @@ export default function CategoriesPage() {
           setIsDialogOpen(true);
         }}
         onDelete={handleDeleteCategory}
-        onReorder={handleReorder}
         onStatusToggle={toggleStatus}
       />
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

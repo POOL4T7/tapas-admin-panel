@@ -17,13 +17,11 @@ import { Switch } from '@/components/ui/switch';
 import React from 'react';
 import { Offer } from '@/types/offer';
 import { uploadOfferImage } from '@/lib/offer-api';
-import { Menu } from '@/types/menu';
 import Image from 'next/image';
 
 const offerSchema = z.object({
   id: z.number().optional(),
   name: z.string().min(1, 'Required'),
-  menuId: z.number(),
   foodItemsInfo: z.string(),
   foodItemsPrice: z.string(),
   foodItemsImagePaths: z.array(z.string()),
@@ -32,6 +30,8 @@ const offerSchema = z.object({
   drinkItemsImagePaths: z.array(z.string()),
   offerImagePath: z.string().nullable(),
   description: z.string().min(1, 'Required'),
+  tagLine: z.string().optional(),
+  metadata: z.string().optional(),
   isActive: z.boolean(),
 });
 
@@ -42,7 +42,6 @@ interface OfferFormProps {
   onSubmit: (offer: OfferFormValues) => void;
   onCancel: () => void;
   editing: boolean;
-  menus: Menu[];
 }
 
 const OfferForm: React.FC<OfferFormProps> = ({
@@ -50,12 +49,13 @@ const OfferForm: React.FC<OfferFormProps> = ({
   onSubmit,
   onCancel,
   editing,
-  menus,
 }) => {
   const form = useForm<OfferFormValues>({
     resolver: zodResolver(offerSchema),
     defaultValues: {
       ...offer,
+      tagLine: offer.tagLine || '',
+      metadata: offer.metadata || '',
       foodItemsImagePaths: offer.foodItemsImagePaths || [],
       drinkItemsImagePaths: offer.drinkItemsImagePaths || [],
       offerImagePath: offer.offerImagePath || null,
@@ -123,36 +123,19 @@ const OfferForm: React.FC<OfferFormProps> = ({
   return (
     <Form {...form}>
       <form onSubmit={handleSubmit} className='space-y-6'>
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-          <FormField
-            control={form.control}
-            name='name'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Offer Name</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder='Offer name' />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div>
-            <FormLabel>Menu</FormLabel>
-            <select
-              className='block w-full rounded border px-3 py-2 text-gray-700'
-              value={form.watch('menuId') || ''}
-              onChange={(e) => form.setValue('menuId', Number(e.target.value))}
-            >
-              <option value=''>Select Menu</option>
-              {menus?.map((menu) => (
-                <option key={menu.id} value={menu.id}>
-                  {menu.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <FormField
+          control={form.control}
+          name='name'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Offer Name</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder='Offer name' />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
@@ -166,6 +149,32 @@ const OfferForm: React.FC<OfferFormProps> = ({
                   placeholder='Write a short description...'
                   rows={4}
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name='tagLine'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tagline</FormLabel>
+              <FormControl>
+                <Input placeholder='Enter tagline' {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name='metadata'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Metadata</FormLabel>
+              <FormControl>
+                <Textarea placeholder='Enter metadata' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

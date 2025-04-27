@@ -34,38 +34,38 @@ import { SubCategory } from '@/types/sub-category';
 import { subCategoryByCategoryId } from '@/lib/sub-categories-api';
 import { getProductById, uploadProductImage } from '@/lib/products-api';
 
-type ProductFormValues = {
+// Update ProductFormValues to match schema and Product type
+export type ProductFormValues = {
   name: string;
   description?: string;
   price: number;
-  displayOrder: number;
-  // menuId: number;
   categoryId: number;
   subCategoryId: number;
+  tagLine?: string;
+  metadata?: string;
+  allergies?: string;
   status: boolean;
   tags?: string[];
   ingredients?: string[];
   itemsImagePaths?: string[];
-  metadata?: string;
+  image?: string;
 };
 
 const productSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   description: z.string().optional(),
   price: z.coerce.number().min(0, { message: 'Price must be non-negative' }),
-  displayOrder: z.coerce
-    .number()
-    .min(0, { message: 'Display order must be non-negative' }),
-  // menuId: z.coerce.number({ required_error: 'Please select a menu' }),
   categoryId: z.coerce.number({ required_error: 'Please select a category' }),
   subCategoryId: z.coerce.number({
     required_error: 'Please select a sub-category',
   }),
+  tagLine: z.string().optional(),
+  metadata: z.string().optional(),
+  allergies: z.string().optional(),
   status: z.boolean(),
   tags: z.array(z.string()).optional(),
   ingredients: z.array(z.string()).optional(),
   itemsImagePaths: z.array(z.string()).optional(),
-  metadata: z.string().optional(),
 });
 
 type ProductFormProps = {
@@ -94,14 +94,15 @@ export function ProductForm({
       name: initialData?.name || '',
       description: initialData?.description || '',
       price: initialData?.price || 0,
-      displayOrder: initialData?.displayOrder || 0,
       categoryId: initialData?.categoryId || 0,
       subCategoryId: initialData?.subCategoryId || 0,
+      tagLine: initialData?.tagLine || '',
+      metadata: initialData?.metadata || '',
+      allergies: initialData?.allergies || '',
       status: initialData?.status || false,
       tags: initialData?.tags || [],
       ingredients: initialData?.ingredients || [],
       itemsImagePaths: initialData?.itemsImagePaths || [],
-      metadata: initialData?.metadata || '',
     },
   });
 
@@ -130,12 +131,13 @@ export function ProductForm({
         form.setValue('name', product.name);
         form.setValue('description', product.description);
         form.setValue('price', product.price);
-        form.setValue('displayOrder', product.displayOrder);
         form.setValue('status', product.status);
         form.setValue('tags', product.tags || []);
         form.setValue('ingredients', product.ingredients || []);
         form.setValue('itemsImagePaths', product.itemsImagePaths || []);
+        form.setValue('tagLine', product.tagLine || '');
         form.setValue('metadata', product.metadata || '');
+        form.setValue('allergies', product.allergies || '');
         setImageUrls(product.itemsImagePaths || []);
       }
     };
@@ -200,17 +202,17 @@ export function ProductForm({
       name: values.name.trim(),
       description: values.description?.trim() || '',
       price: Number(values.price),
-      displayOrder: Number(values.displayOrder || 0),
-      // menuId: values.menuId,
       categoryId: values.categoryId,
       subCategoryId: values.subCategoryId,
+      tagLine: values.tagLine?.trim() || '',
+      metadata: values.metadata?.trim() || '',
+      allergies: values.allergies?.trim() || '',
       status: values.status,
       tags: values.tags?.filter((tag) => tag.trim() !== '') || [],
       ingredients:
         values.ingredients?.filter((ingredient) => ingredient.trim() !== '') ||
         [],
       images: imageUrls.filter((url) => url.trim() !== ''),
-      metadata: values.metadata?.trim() || undefined,
     };
 
     onSubmit(submissionData);
@@ -220,103 +222,70 @@ export function ProductForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
+        {/* Categorization */}
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-          {/* <FormField
-            control={form.control}
-            name='menuId'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Menu</FormLabel>
-                <Select
-                  value={field.value ? String(field.value) : ''}
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    form.resetField('categoryId');
-                    form.resetField('subCategoryId');
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder='Select Menu' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {menus?.map((menu) => (
-                      <SelectItem key={menu.id} value={String(menu.id)}>
-                        {menu.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          /> */}
-
           <FormField
             control={form.control}
             name='categoryId'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Category</FormLabel>
-                <Select
-                  value={field.value ? String(field.value) : ''}
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    form.resetField('subCategoryId');
-                  }}
-                  // disabled={!form.getValues('menuId')}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder='Select Category' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={String(category.id)}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <Select
+                    value={String(field.value)}
+                    onValueChange={(v) => field.onChange(Number(v))}
+                  >
+                    <SelectTrigger className='w-full'>
+                      <SelectValue placeholder='Select category' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={String(cat.id)}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name='subCategoryId'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Sub Category</FormLabel>
-                <Select
-                  value={field.value ? String(field.value) : ''}
-                  onValueChange={field.onChange}
-                  disabled={!form.getValues('categoryId')}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder='Select Sub Category' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {subCategories.map((subCategory) => (
-                      <SelectItem
-                        key={subCategory.id}
-                        value={String(subCategory.id)}
-                      >
-                        {subCategory.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormLabel>Sub-Category</FormLabel>
+                <FormControl>
+                  <Select
+                    value={String(field.value)}
+                    onValueChange={(v) => field.onChange(Number(v))}
+                  >
+                    <SelectTrigger className='w-full'>
+                      <SelectValue placeholder='Select sub-category' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subCategories.map((sub) => (
+                        <SelectItem key={sub.id} value={String(sub.id)}>
+                          {sub.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
+        {/* Basic Info */}
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           <FormField
             control={form.control}
             name='name'
             render={({ field }) => (
-              <FormItem className='md:col-span-2'>
+              <FormItem>
                 <FormLabel>Product Name</FormLabel>
                 <FormControl>
                   <Input placeholder='Enter product name' {...field} />
@@ -325,23 +294,6 @@ export function ProductForm({
               </FormItem>
             )}
           />
-
-          <FormField
-            control={form.control}
-            name='description'
-            render={({ field }) => (
-              <FormItem className='md:col-span-2'>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Textarea placeholder='Product description' {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className='grid grid-cols-2 md:grid-cols-3 gap-2'>
           <FormField
             control={form.control}
             name='price'
@@ -349,44 +301,97 @@ export function ProductForm({
               <FormItem>
                 <FormLabel>Price</FormLabel>
                 <FormControl>
-                  <Input type='number' step='0.01' {...field} />
+                  <Input type='number' placeholder='Enter price' {...field} />
                 </FormControl>
                 <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name='displayOrder'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Display Order</FormLabel>
-                <FormControl>
-                  <Input type='number' {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name='status'
-            render={({ field }) => (
-              <FormItem className='flex flex-row items-center justify-between'>
-                <FormLabel>Status</FormLabel>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={(checked) => field.onChange(checked)}
-                  />
-                </FormControl>
               </FormItem>
             )}
           />
         </div>
 
+        {/* Details */}
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <FormField
+            control={form.control}
+            name='description'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea placeholder='Enter description' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='tagLine'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tagline</FormLabel>
+                <FormControl>
+                  <Input placeholder='Enter tagline' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <FormField
+            control={form.control}
+            name='metadata'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Metadata</FormLabel>
+                <FormControl>
+                  <Textarea placeholder='Enter metadata' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='allergies'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Allergies</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder='Enter allergy information'
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Status */}
+        <div className='mb-4'>
+          <FormField
+            control={form.control}
+            name='status'
+            render={({ field }) => (
+              <FormItem className='flex flex-row items-center gap-4'>
+                <FormLabel>Status</FormLabel>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <span>{field.value ? 'Active' : 'Inactive'}</span>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Tags & Ingredients */}
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           <div>
             <FormLabel>Product Tags</FormLabel>
@@ -419,7 +424,6 @@ export function ProductForm({
               </Button>
             </div>
           </div>
-
           <div>
             <FormLabel>Ingredients</FormLabel>
             <div className='space-y-2'>
@@ -453,6 +457,7 @@ export function ProductForm({
           </div>
         </div>
 
+        {/* Images */}
         <div>
           <FormLabel>Product Images</FormLabel>
           <div className='space-y-2'>
@@ -487,18 +492,7 @@ export function ProductForm({
           </div>
         </div>
 
-        <div>
-          <FormLabel>Metadata</FormLabel>
-          <FormControl>
-            <Textarea
-              placeholder='Enter additional product information (JSON format recommended)'
-              {...form.register('metadata')}
-              className='w-full min-h-[100px]'
-            />
-          </FormControl>
-        </div>
-
-        <Button type='submit' className='w-full'>
+        <Button type='submit' className='w-full mt-6'>
           {initialData ? 'Update Product' : 'Create Product'}
         </Button>
       </form>

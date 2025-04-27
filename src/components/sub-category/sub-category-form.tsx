@@ -30,22 +30,19 @@ import { Switch } from '../ui/switch';
 import { uploadSubCategoryImage } from '@/lib/sub-categories-api';
 
 const subCategorySchema = z.object({
-  // menuId: z.coerce.number({ required_error: 'Please select a menu' }),
   categoryId: z.coerce.number().min(1, {
     message: 'Please select a category',
   }),
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   description: z.string().optional(),
-  displayOrder: z.coerce
-    .number()
-    .min(0, { message: 'Display order must be non-negative' }),
+  tagLine: z.string().optional(),
+  metadata: z.string().optional(),
   status: z.boolean(),
   image: z.string().optional(),
 });
 
 interface SubCategoryFormProps {
   initialData?: SubCategory | null;
-  // menus: Menu[];
   categories: Category[];
   onSubmit: (data: SubCategory) => void;
   onCancel?: () => void;
@@ -53,7 +50,6 @@ interface SubCategoryFormProps {
 
 export function SubCategoryForm({
   initialData,
-  // menus,
   categories,
   onSubmit,
   onCancel,
@@ -62,16 +58,14 @@ export function SubCategoryForm({
     initialData?.image || null
   );
 
-  // const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
-
   const form = useForm<z.infer<typeof subCategorySchema>>({
     resolver: zodResolver(subCategorySchema),
     defaultValues: {
-      // menuId: initialData?.menuId || 0,
       categoryId: initialData?.categoryId || 0,
       name: initialData?.name || '',
       description: initialData?.description || '',
-      displayOrder: initialData?.displayOrder || 0,
+      tagLine: initialData?.tagLine || '',
+      metadata: initialData?.metadata || '',
       status: initialData?.status || false,
       image: initialData?.image || '',
     },
@@ -161,27 +155,6 @@ export function SubCategoryForm({
               </FormItem>
             )}
           />
-
-          <FormField
-            control={form.control}
-            name='displayOrder'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className='font-semibold text-sm sm:text-base'>
-                  Display Order
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    type='number'
-                    placeholder='Enter display order'
-                    {...field}
-                    className='bg-white text-sm sm:text-base'
-                  />
-                </FormControl>
-                <FormMessage className='text-red-500 text-xs sm:text-sm' />
-              </FormItem>
-            )}
-          />
         </div>
 
         <div className='grid grid-cols-1 gap-4'>
@@ -201,6 +174,38 @@ export function SubCategoryForm({
                   />
                 </FormControl>
                 <FormMessage className='text-red-500 text-xs sm:text-sm' />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className='grid grid-cols-1 gap-4'>
+          <FormField
+            control={form.control}
+            name='tagLine'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tagline</FormLabel>
+                <FormControl>
+                  <Input placeholder='Enter tagline' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className='grid grid-cols-1 gap-4'>
+          <FormField
+            control={form.control}
+            name='metadata'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Metadata</FormLabel>
+                <FormControl>
+                  <Textarea placeholder='Enter metadata' {...field} />
+                </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />

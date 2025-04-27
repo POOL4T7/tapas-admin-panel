@@ -1,8 +1,6 @@
 import { SubCategory } from '@/types/sub-category';
 import { Category } from '@/types/category';
 // import { Menu } from '@/types/menu';
-import { DraggableTable } from '@/components/ui/draggable-table';
-import { DraggableRow } from '@/components/ui/draggable-row';
 import { TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash, Layers } from 'lucide-react';
@@ -20,7 +18,6 @@ interface SubCategoryTableProps {
   // menus: Menu[];
   onEdit: (subCategory: SubCategory) => void;
   onDelete: (subCategory: SubCategory) => void;
-  onReorder: (oldIndex: number, newIndex: number) => void;
   onStatusToggle: (subCategory: SubCategory) => void;
 }
 
@@ -28,78 +25,90 @@ export function SubCategoryTable({
   subCategories,
   onEdit,
   onDelete,
-  onReorder,
   onStatusToggle,
 }: SubCategoryTableProps) {
   const headers = ['S.No', 'Name', 'Status', 'Actions'];
 
   return (
     <TooltipProvider>
-      <div className='rounded-md shadow-sm'>
-        <DraggableTable
-          items={subCategories.map((i) => ({ id: String(i.id) }))}
-          onReorder={onReorder}
-          headers={headers}
-        >
-          {subCategories.map((subCategory, index) => {
-            return (
-              <DraggableRow key={subCategory.id} id={String(subCategory.id)}>
-                <TableCell className='text-center font-mono text-sm'>
-                  {index + 1}
-                </TableCell>
-                <TableCell className='font-medium'>
-                  {subCategory.name}
-                </TableCell>
-                {/* <TableCell>{menu?.name || 'Unassigned'}</TableCell> */}
+      <div className='rounded-lg border  overflow-hidden bg-white'>
+        <table className='min-w-full divide-y divide-gray-200'>
+          <thead className='bg-gray-50'>
+            <tr>
+              {headers.map((header) => (
+                <th
+                  key={header}
+                  className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
+                >
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {subCategories.map((subCategory, index) => {
+              return (
+                <tr
+                  key={subCategory.id}
+                  className='[&>td]:py-1 hover:bg-gray-50 transition-colors duration-150'
+                >
+                  <TableCell className=' font-mono text-xs border-b border-gray-100'>
+                    <span className='ml-5'>{index + 1}</span>
+                  </TableCell>
+                  <TableCell className='font-normal text-sm border-b border-gray-100'>
+                    {subCategory.name}
+                  </TableCell>
+                  {/* <TableCell>{menu?.name || 'Unassigned'}</TableCell> */}
 
-                <TableCell>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Switch
-                        checked={subCategory.status}
-                        onCheckedChange={() => onStatusToggle(subCategory)}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {subCategory.status ? 'Deactivate' : 'Activate'}
-                    </TooltipContent>
-                  </Tooltip>
-                </TableCell>
-                <TableCell>
-                  <div className='flex items-center gap-1'>
+                  <TableCell>
                     <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant='ghost'
-                          size='icon'
-                          onClick={() => onEdit(subCategory)}
-                          className='h-8 w-8 rounded-full hover:bg-blue-50 hover:text-blue-600'
-                        >
-                          <Edit className='h-4 w-4' />
-                        </Button>
+                      <TooltipTrigger>
+                        <Switch
+                          checked={subCategory.status}
+                          onCheckedChange={() => onStatusToggle(subCategory)}
+                        />
                       </TooltipTrigger>
-                      <TooltipContent>Edit Sub-Category</TooltipContent>
+                      <TooltipContent>
+                        {subCategory.status ? 'Deactivate' : 'Activate'}
+                      </TooltipContent>
                     </Tooltip>
+                  </TableCell>
+                  <TableCell>
+                    <div className='flex items-center gap-1'>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            onClick={() => onEdit(subCategory)}
+                            className='h-8 w-8 rounded-full hover:bg-gray-50 hover:text-gray-600'
+                          >
+                            <Edit className='h-4 w-4' />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Edit Sub-Category</TooltipContent>
+                      </Tooltip>
 
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant='ghost'
-                          size='icon'
-                          onClick={() => onDelete(subCategory)}
-                          className='h-8 w-8 rounded-full hover:bg-red-50 text-muted-foreground hover:text-red-600'
-                        >
-                          <Trash className='h-4 w-4' />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Delete Sub-Category</TooltipContent>
-                    </Tooltip>
-                  </div>
-                </TableCell>
-              </DraggableRow>
-            );
-          })}
-        </DraggableTable>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            onClick={() => onDelete(subCategory)}
+                            className='h-8 w-8 rounded-full hover:bg-red-50 text-muted-foreground hover:text-red-600'
+                          >
+                            <Trash className='h-4 w-4' />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete Sub-Category</TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </TableCell>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
         {subCategories.length === 0 && (
           <div className='flex flex-col items-center justify-center py-12 text-center'>
             <div className='rounded-full bg-slate-100 p-3 mb-3'>

@@ -6,5 +6,6 @@ export type SubCategory = {
   description?: string;
   status: boolean;
   image?: string;
-  displayOrder: number;
+  tagLine?: string;
+  metadata?: string;
 };

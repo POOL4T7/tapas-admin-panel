@@ -4,7 +4,7 @@ export type Product = {
   subCategoryId: number;
   description: string;
   status: boolean;
-  displayOrder: number;
+
   price: number;
   categoryId: number;
 
@@ -12,6 +12,8 @@ export type Product = {
   tags?: string[];
   ingredients?: string[];
   itemsImagePaths?: string[];
+  allergies?: string;
+  tagLine?: string;
   metadata?: string;
 };
 

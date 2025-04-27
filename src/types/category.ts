@@ -4,5 +4,6 @@ export type Category = {
   description?: string;
   status: boolean;
   imagePath?: string;
-  displayOrder: number;
+  tagLine?: string;
+  metadata?: string;
 };

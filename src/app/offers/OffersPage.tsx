@@ -80,18 +80,8 @@ export default function OffersPage() {
         prev.map((o) =>
           o.id === data.id
             ? {
+                ...data,
                 id: data.id,
-                name: data.name,
-                menuId: data.menuId,
-                foodItemsInfo: data.foodItemsInfo,
-                foodItemsPrice: data.foodItemsPrice,
-                foodItemsImagePaths: data.foodItemsImagePaths,
-                drinkItemsInfo: data.drinkItemsInfo,
-                drinkItemsPrice: data.drinkItemsPrice,
-                drinkItemsImagePaths: data.drinkItemsImagePaths,
-                offerImagePath: data.offerImagePath,
-                description: data.description,
-                isActive: data.isActive,
               }
             : o
         )

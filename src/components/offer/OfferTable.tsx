@@ -12,7 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import Image from 'next/image';
+// import Image from 'next/image';
 import React from 'react';
 
 interface OfferTableProps {
@@ -33,9 +33,9 @@ export function OfferTable({
   const headers = [
     'S.No',
     'Name',
-    'Menu ID',
-    'Offer Image',
-    'Description',
+
+    // 'Offer Image',
+    // 'Description',
     'Food Info',
     'Food Price',
     'Drink Info',
@@ -60,8 +60,8 @@ export function OfferTable({
                 {index + 1}
               </TableCell>
               <TableCell className='font-medium'>{offer.name}</TableCell>
-              <TableCell>{offer.menuId}</TableCell>
-              <TableCell>
+
+              {/* <TableCell>
                 {offer.offerImagePath && (
                   <Image
                     src={
@@ -73,10 +73,10 @@ export function OfferTable({
                     className='rounded border object-cover'
                   />
                 )}
-              </TableCell>
-              <TableCell className='truncate max-w-xs'>
+              </TableCell> */}
+              {/* <TableCell className='truncate max-w-xs'>
                 {offer.description}
-              </TableCell>
+              </TableCell> */}
               <TableCell className='truncate max-w-xs'>
                 {offer.foodItemsInfo}
               </TableCell>
