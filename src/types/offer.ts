@@ -12,5 +12,5 @@ export interface Offer {
   drinkItemsImagePaths: string[];
   offerImagePath: string | null;
   description: string;
-  status: boolean;
+  isActive: boolean;
 }

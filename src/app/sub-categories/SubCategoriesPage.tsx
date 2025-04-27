@@ -8,6 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { SubCategoryForm } from '@/components/sub-category/sub-category-form';
 import { SubCategoryTable } from '@/components/sub-category/sub-category-table';
@@ -25,6 +27,7 @@ import { getAllCategories } from '@/lib/categories-api';
 // import { getAllMenus } from '@/lib/menu-api';
 import {
   createSubCategory,
+  deleteSubCategory,
   getAllSubCategories,
   updateSubCategory,
 } from '@/lib/sub-categories-api';
@@ -41,6 +44,9 @@ export default function SubCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [loading, setLoading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [subCategoryToDelete, setSubCategoryToDelete] =
+    useState<SubCategory | null>(null);
 
   useEffect(() => {
     async function fetchCategories() {
@@ -97,8 +103,12 @@ export default function SubCategoriesPage() {
     // Get the ids of the filtered subcategories (the visible ones)
     const filteredIds = filteredSubCategories.map((sc) => sc.id);
     // Find the corresponding indices in subCategories
-    const oldGlobalIndex = subCategories.findIndex(sc => sc.id === filteredIds[oldIndex]);
-    const newGlobalIndex = subCategories.findIndex(sc => sc.id === filteredIds[newIndex]);
+    const oldGlobalIndex = subCategories.findIndex(
+      (sc) => sc.id === filteredIds[oldIndex]
+    );
+    const newGlobalIndex = subCategories.findIndex(
+      (sc) => sc.id === filteredIds[newIndex]
+    );
     if (oldGlobalIndex === -1 || newGlobalIndex === -1) return;
 
     // Make a copy and reorder
@@ -130,6 +140,7 @@ export default function SubCategoriesPage() {
       setLoading(false);
     }
   };
+
   const handleEditSubCategory = async (updatedCategory: SubCategory) => {
     setLoading(true);
     try {
@@ -151,16 +162,31 @@ export default function SubCategoriesPage() {
   };
 
   const handleDeleteSubCategory = async (subCategory: SubCategory) => {
+    setSubCategoryToDelete(subCategory);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteSubCategory = async () => {
+    if (!subCategoryToDelete) return;
     setLoading(true);
     try {
-      // await apiDeleteSubCategory(category.id);
-      setSubCategories(subCategories.filter((sc) => sc.id !== subCategory.id));
+      await deleteSubCategory(subCategoryToDelete.id);
+      setSubCategories(
+        subCategories.filter((sc) => sc.id !== subCategoryToDelete.id)
+      );
       toast.success('Sub-category deleted successfully');
     } catch {
       toast.error('Failed to delete sub-category');
     } finally {
       setLoading(false);
+      setDeleteDialogOpen(false);
+      setSubCategoryToDelete(null);
     }
+  };
+
+  const cancelDeleteSubCategory = () => {
+    setDeleteDialogOpen(false);
+    setSubCategoryToDelete(null);
   };
 
   const toggleStatus = async (category: SubCategory) => {
@@ -264,6 +290,34 @@ export default function SubCategoriesPage() {
         onReorder={handleReorder}
         onStatusToggle={toggleStatus}
       />
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Sub Category</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the sub category &quot;
+              {subCategoryToDelete?.name}&quot;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              className='px-4 py-2 rounded bg-gray-200 hover:bg-gray-300'
+              onClick={cancelDeleteSubCategory}
+              type='button'
+            >
+              Cancel
+            </button>
+            <button
+              className='px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700'
+              onClick={confirmDeleteSubCategory}
+              type='button'
+              disabled={loading}
+            >
+              Delete
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

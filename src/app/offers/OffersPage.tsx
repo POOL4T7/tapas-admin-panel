@@ -7,6 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import OfferForm from '@/components/offer/OfferForm';
 import OfferTable from '@/components/offer/OfferTable';
@@ -32,7 +34,7 @@ const emptyOffer = (): Offer => ({
   drinkItemsImagePaths: [],
   offerImagePath: null,
   description: '',
-  status: true,
+  isActive: true,
 });
 
 export default function OffersPage() {
@@ -41,6 +43,8 @@ export default function OffersPage() {
   const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
   const [loading, setLoading] = useState(false);
   const [menus, setMenus] = useState([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [offerToDelete, setOfferToDelete] = useState<Offer | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -53,11 +57,12 @@ export default function OffersPage() {
   const handleCreateOffer = async (data: OfferFormValues) => {
     setLoading(true);
     try {
+      delete data.id;
       const created = await createOffer(data);
       setOffers((prev) => [
         ...prev,
         {
-          ...created,
+          ...created.data,
         },
       ]);
       setIsDialogOpen(false);
@@ -86,7 +91,7 @@ export default function OffersPage() {
                 drinkItemsImagePaths: data.drinkItemsImagePaths,
                 offerImagePath: data.offerImagePath,
                 description: data.description,
-                status: data.status,
+                isActive: data.isActive,
               }
             : o
         )
@@ -99,13 +104,26 @@ export default function OffersPage() {
   };
 
   const handleDeleteOffer = async (offer: Offer) => {
+    setOfferToDelete(offer);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteOffer = async () => {
+    if (!offerToDelete) return;
     setLoading(true);
     try {
-      await deleteOffer(offer.id);
-      setOffers((prev) => prev.filter((o) => o.id !== offer.id));
+      await deleteOffer(offerToDelete.id);
+      setOffers((prev) => prev.filter((o) => o.id !== offerToDelete.id));
     } finally {
       setLoading(false);
+      setDeleteDialogOpen(false);
+      setOfferToDelete(null);
     }
+  };
+
+  const cancelDeleteOffer = () => {
+    setDeleteDialogOpen(false);
+    setOfferToDelete(null);
   };
 
   const handleReorder = (oldIndex: number, newIndex: number) => {
@@ -122,9 +140,11 @@ export default function OffersPage() {
     try {
       const updated = await updateOffer(offer.id, {
         ...offer,
-        status: !offer.status,
+        isActive: !offer.isActive,
       });
-      setOffers((prev) => prev.map((o) => (o.id === offer.id ? updated : o)));
+      setOffers((prev) =>
+        prev.map((o) => (o.id === offer.id ? updated.data : o))
+      );
     } finally {
       setLoading(false);
     }
@@ -184,6 +204,34 @@ export default function OffersPage() {
         onReorder={handleReorder}
         onStatusToggle={toggleStatus}
       />
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Offer</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the offer &quot;
+              {offerToDelete?.name}&quot;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              className='px-4 py-2 rounded bg-gray-200 hover:bg-gray-300'
+              onClick={cancelDeleteOffer}
+              type='button'
+            >
+              Cancel
+            </button>
+            <button
+              className='px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700'
+              onClick={confirmDeleteOffer}
+              type='button'
+              disabled={loading}
+            >
+              Delete
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {loading && <div className='mt-4 text-center'>Loading...</div>}
     </div>
   );

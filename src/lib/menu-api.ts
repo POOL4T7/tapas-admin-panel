@@ -46,3 +46,11 @@ export async function getMenuById(menuId: string) {
   }
 }
 
+// export async function deleteMenu(menuId: number) {
+//   try {
+//     const response = await api.delete(`/api/menu/delete/${menuId}`);
+//     return response.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// }

@@ -8,6 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { ProductForm } from '@/components/product/product-form';
 import { ProductTable } from '@/components/product/product-table';
@@ -27,6 +29,7 @@ import { getAllCategories } from '@/lib/categories-api';
 import { getAllSubCategories } from '@/lib/sub-categories-api';
 import {
   createProduct,
+  deleteProduct,
   getAllProducts,
   updateProduct,
 } from '@/lib/products-api';
@@ -46,6 +49,8 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [loading, setLoading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
   useEffect(() => {
     async function fetchCategories() {
@@ -138,16 +143,30 @@ export default function ProductsPage() {
   };
 
   const handleDeleteProduct = async (product: Product) => {
+    setProductToDelete(product);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteProduct = async () => {
+    if (!productToDelete) return;
     setLoading(true);
     try {
-      // await apiDeleteSubCategory(category.id);
-      setProducts(products.filter((p) => p.id !== product.id));
+      // await apiDeleteSubCategory(productToDelete.id);
+      setProducts(products.filter((p) => p.id !== productToDelete.id));
+      await deleteProduct(productToDelete.id);
       toast.success('Item deleted successfully');
     } catch {
       toast.error('Failed to delete product');
     } finally {
       setLoading(false);
+      setDeleteDialogOpen(false);
+      setProductToDelete(null);
     }
+  };
+
+  const cancelDeleteProduct = () => {
+    setDeleteDialogOpen(false);
+    setProductToDelete(null);
   };
 
   const toggleStatus = async (product: Product) => {
@@ -297,6 +316,35 @@ export default function ProductsPage() {
         onReorder={handleReorder}
         onStatusToggle={toggleStatus}
       />
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Product</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the product &quot;
+              {productToDelete?.name}&quot;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              className='px-4 py-2 rounded bg-gray-200 hover:bg-gray-300'
+              onClick={cancelDeleteProduct}
+              type='button'
+            >
+              Cancel
+            </button>
+            <button
+              className='px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700'
+              onClick={confirmDeleteProduct}
+              type='button'
+              disabled={loading}
+            >
+              Delete
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

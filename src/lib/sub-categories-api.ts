@@ -39,10 +39,10 @@ export async function getAllSubCategories() {
   }
 }
 
-export async function deleteSubCategory(subCategoryId: string) {
+export async function deleteSubCategory(subCategoryId: number) {
   try {
     const response = await api.delete(
-      `/api/menu/deleteSubCategory/${subCategoryId}`
+      `/api/subcategory/delete/${subCategoryId}`
     );
     return response.data;
   } catch (error) {
@@ -51,16 +51,17 @@ export async function deleteSubCategory(subCategoryId: string) {
 }
 export async function subCategoryByCategoryId(categoryId: string) {
   try {
-    const response = await api.get(
-      `/api/subcategory/categoryId/${categoryId}`
-    );
+    const response = await api.get(`/api/subcategory/categoryId/${categoryId}`);
     return response.data;
   } catch (error) {
     throw error;
   }
 }
 
-export async function uploadSubCategoryImage(image: File, subCategoryId: string) {
+export async function uploadSubCategoryImage(
+  image: File,
+  subCategoryId: string
+) {
   try {
     const formData = new FormData();
     formData.append('subCategoryId', subCategoryId);
@@ -76,4 +77,3 @@ export async function uploadSubCategoryImage(image: File, subCategoryId: string)
     throw error;
   }
 }
-

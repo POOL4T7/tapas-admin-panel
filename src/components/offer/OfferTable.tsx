@@ -89,7 +89,7 @@ export function OfferTable({
                 <Tooltip>
                   <TooltipTrigger>
                     <Switch
-                      checked={!!offer.status}
+                      checked={!!offer.isActive}
                       onCheckedChange={
                         onStatusToggle
                           ? (checked) => onStatusToggle(offer, checked)
@@ -98,7 +98,7 @@ export function OfferTable({
                     />
                   </TooltipTrigger>
                   <TooltipContent>
-                    {offer.status ? 'Deactivate' : 'Activate'}
+                    {offer.isActive ? 'Deactivate' : 'Activate'}
                   </TooltipContent>
                 </Tooltip>
               </TableCell>

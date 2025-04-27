@@ -94,3 +94,14 @@ export async function uploadProductImage(images: File[], itemId: string) {
     throw error;
   }
 }
+
+
+export async function deleteProduct(productId: string) {
+  try {
+    const response = await api.delete(`/api/menu/deleteItem/${productId}`);
+    return response.data;
+  } catch (error) {
+    // Handle error as needed (could expand this based on your error handling strategy)
+    throw error;
+  }
+}

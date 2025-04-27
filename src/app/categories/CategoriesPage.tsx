@@ -8,6 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { CategoryForm } from '@/components/category/category-form';
 import { CategoryTable } from '@/components/category/category-table';
@@ -27,6 +29,8 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
 
   // const [menus, setMenus] = useState<Menu[]>([]);
 
@@ -93,17 +97,31 @@ export default function CategoriesPage() {
     }
   };
   const handleDeleteCategory = async (category: Category) => {
+    setCategoryToDelete(category);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteCategory = async () => {
+    if (!categoryToDelete) return;
     setLoading(true);
     try {
-      await apiDeleteCategory(category.id);
-      setCategories(categories.filter((c) => c.id !== category.id));
+      await apiDeleteCategory(categoryToDelete.id);
+      setCategories(categories.filter((c) => c.id !== categoryToDelete.id));
       toast.success('Category deleted successfully');
     } catch {
       toast.error('Failed to delete category');
     } finally {
       setLoading(false);
+      setDeleteDialogOpen(false);
+      setCategoryToDelete(null);
     }
   };
+
+  const cancelDeleteCategory = () => {
+    setDeleteDialogOpen(false);
+    setCategoryToDelete(null);
+  };
+
   const toggleStatus = async (category: Category) => {
     setLoading(true);
     try {
@@ -195,6 +213,33 @@ export default function CategoriesPage() {
         onReorder={handleReorder}
         onStatusToggle={toggleStatus}
       />
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Category</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the category &quot;{categoryToDelete?.name}&quot;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              className='px-4 py-2 rounded bg-gray-200 hover:bg-gray-300'
+              onClick={cancelDeleteCategory}
+              type='button'
+            >
+              Cancel
+            </button>
+            <button
+              className='px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700'
+              onClick={confirmDeleteCategory}
+              type='button'
+              disabled={loading}
+            >
+              Delete
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

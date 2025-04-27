@@ -32,7 +32,7 @@ const offerSchema = z.object({
   drinkItemsImagePaths: z.array(z.string()),
   offerImagePath: z.string().nullable(),
   description: z.string().min(1, 'Required'),
-  status: z.boolean(),
+  isActive: z.boolean(),
 });
 
 export type OfferFormValues = z.infer<typeof offerSchema>;
@@ -59,6 +59,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
       foodItemsImagePaths: offer.foodItemsImagePaths || [],
       drinkItemsImagePaths: offer.drinkItemsImagePaths || [],
       offerImagePath: offer.offerImagePath || null,
+      isActive: offer.isActive || false,
     },
     mode: 'onChange',
   });
@@ -350,7 +351,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
         <div className='flex flex-col md:flex-row md:items-center gap-4'>
           <FormField
             control={form.control}
-            name='status'
+            name='isActive'
             render={({ field }) => (
               <FormItem className='flex flex-row items-center gap-2'>
                 <FormLabel>Status</FormLabel>
