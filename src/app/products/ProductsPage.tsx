@@ -189,31 +189,31 @@ export default function ProductsPage() {
     }
   };
 
-  const handleReorder = (oldIndex: number, newIndex: number) => {
-    // Get the ids of the filtered products (the visible ones)
-    const filteredIds = filteredProducts.map((p) => p.id);
-    // Find the corresponding indices in products
-    const oldGlobalIndex = products.findIndex(
-      (p) => p.id === filteredIds[oldIndex]
-    );
-    const newGlobalIndex = products.findIndex(
-      (p) => p.id === filteredIds[newIndex]
-    );
-    if (oldGlobalIndex === -1 || newGlobalIndex === -1) return;
+  // const handleReorder = (oldIndex: number, newIndex: number) => {
+  //   // Get the ids of the filtered products (the visible ones)
+  //   const filteredIds = filteredProducts.map((p) => p.id);
+  //   // Find the corresponding indices in products
+  //   const oldGlobalIndex = products.findIndex(
+  //     (p) => p.id === filteredIds[oldIndex]
+  //   );
+  //   const newGlobalIndex = products.findIndex(
+  //     (p) => p.id === filteredIds[newIndex]
+  //   );
+  //   if (oldGlobalIndex === -1 || newGlobalIndex === -1) return;
 
-    // Make a copy and reorder
-    const newProducts = [...products];
-    const [removed] = newProducts.splice(oldGlobalIndex, 1);
-    newProducts.splice(newGlobalIndex, 0, removed);
+  //   // Make a copy and reorder
+  //   const newProducts = [...products];
+  //   const [removed] = newProducts.splice(oldGlobalIndex, 1);
+  //   newProducts.splice(newGlobalIndex, 0, removed);
 
-    // Update display orders for all
-    const updatedProducts = newProducts.map((p, index) => ({
-      ...p,
-      displayOrder: index + 1,
-    }));
+  //   // Update display orders for all
+  //   const updatedProducts = newProducts.map((p, index) => ({
+  //     ...p,
+  //     displayOrder: index + 1,
+  //   }));
 
-    setProducts(updatedProducts);
-  };
+  //   setProducts(updatedProducts);
+  // };
 
   if (loading) {
     console.log(loading);
@@ -313,7 +313,7 @@ export default function ProductsPage() {
           setIsDialogOpen(true);
         }}
         onDelete={handleDeleteProduct}
-        onReorder={handleReorder}
+        // onReorder={handleReorder}
         onStatusToggle={toggleStatus}
       />
 

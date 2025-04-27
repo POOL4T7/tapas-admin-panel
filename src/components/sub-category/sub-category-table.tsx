@@ -60,7 +60,7 @@ export function SubCategoryTable({
                   </TableCell>
                   {/* <TableCell>{menu?.name || 'Unassigned'}</TableCell> */}
 
-                  <TableCell>
+                  <TableCell className='font-normal text-sm border-b border-gray-100'>
                     <Tooltip>
                       <TooltipTrigger>
                         <Switch
@@ -73,7 +73,7 @@ export function SubCategoryTable({
                       </TooltipContent>
                     </Tooltip>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className='font-normal text-sm border-b border-gray-100'>
                     <div className='flex items-center gap-1'>
                       <Tooltip>
                         <TooltipTrigger asChild>

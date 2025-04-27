@@ -20,12 +20,12 @@ import {
   updateOffer,
   deleteOffer,
 } from '@/lib/offer-api';
-import { getAllMenus } from '@/lib/menu-api';
+// import { getAllMenus } from '@/lib/menu-api';
 
 const emptyOffer = (): Offer => ({
   id: Date.now(),
   name: '',
-  menuId: 0,
+  // menuId: 0,
   foodItemsInfo: '',
   foodItemsPrice: '',
   foodItemsImagePaths: [],
@@ -42,13 +42,13 @@ export default function OffersPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
   const [loading, setLoading] = useState(false);
-  const [menus, setMenus] = useState([]);
+  // const [menus, setMenus] = useState([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [offerToDelete, setOfferToDelete] = useState<Offer | null>(null);
 
   useEffect(() => {
     setLoading(true);
-    getAllMenus().then((data) => setMenus(data.data));
+    // getAllMenus().then((data) => setMenus(data.data));
     getOffers()
       .then((data) => setOffers(data.data))
       .finally(() => setLoading(false));
@@ -166,7 +166,6 @@ export default function OffersPage() {
               </DialogHeader>
               <OfferForm
                 offer={editingOffer || emptyOffer()}
-                menus={menus}
                 onSubmit={(values) => {
                   if (editingOffer) {
                     handleEditOffer({ ...editingOffer, ...values });
