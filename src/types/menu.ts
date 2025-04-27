@@ -4,9 +4,11 @@
 export type Categories = {
   id: number;
   name: string;
+  displayOrder: number;
   subCategories: {
     id: number;
     name: string;
+    displayOrder: number;
   }[];
 };
 

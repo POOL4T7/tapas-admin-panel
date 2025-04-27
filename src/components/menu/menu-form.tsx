@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Menu } from '@/types/menu';
+import { Categories, Menu } from '@/types/menu';
 import { Category } from '@/types/category';
 import { SubCategory } from '@/types/sub-category';
 import {
@@ -99,9 +99,11 @@ export function MenuForm({
     {
       id: number;
       name: string;
+      displayOrder: number;
       subCategoryIds: {
         id: number;
         name: string;
+        displayOrder: number;
       }[];
     }[]
   >([]);
@@ -141,23 +143,28 @@ export function MenuForm({
           form.setValue('tagLine', data?.data?.tagLine || '');
           form.setValue('metadata', data?.data?.metadata || '');
 
-          const initialSelections = categoriesResponse?.data?.categories.map(
-            (cat: {
-              id: number;
-              name: string;
-              subCategories: { id: number; name: string }[];
-            }) => ({
-              id: cat.id,
-              name: cat.name,
-              subCategoryIds: cat.subCategories.map(
-                (sub: { id: number; name: string }) => ({
-                  id: sub.id,
-                  name: sub.name,
-                })
-              ),
-            })
-          );
-          // setIsEntitesAdded(initialSelections.length > 0);
+          const initialSelections =
+            categoriesResponse?.data?.categories?.map(
+              (cat: Categories, catIdx: number) => {
+                const categoryDisplayOrder = cat.displayOrder ?? catIdx + 1;
+
+                const subCategoryIds =
+                  cat.subCategories?.map((sub, subIdx) => ({
+                    id: sub.id,
+                    name: sub.name,
+                    displayOrder: sub.displayOrder ?? subIdx + 1,
+                  })) || [];
+
+                return {
+                  id: cat.id,
+                  name: cat.name,
+                  displayOrder: categoryDisplayOrder,
+                  subCategoryIds,
+                };
+              }
+            ) || [];
+          console.log('initialSelections', initialSelections);
+
           setCategorySelections(initialSelections);
           setMenuId(oldMenuId || '');
         } catch (error) {
@@ -178,36 +185,42 @@ export function MenuForm({
     );
     const sub = fetchedSubCategories.find((s) => s.id === subCategoryId);
     setCategorySelections((prev) => {
-      const existingIndex = prev.findIndex(
+      const existing = prev.find(
         (sel) => sel.id === Number(selectedCategoryId)
       );
-      if (existingIndex >= 0) {
-        const updated = [...prev];
+      if (existing) {
         const newSubIds = checked
           ? [
-              ...updated[existingIndex].subCategoryIds,
-              { id: subCategoryId, name: sub?.name || '' },
+              ...existing.subCategoryIds,
+              {
+                id: subCategoryId,
+                name: sub?.name || '',
+                displayOrder: existing.subCategoryIds.length + 1,
+              },
             ]
-          : updated[existingIndex].subCategoryIds.filter(
-              (id) => id.id !== subCategoryId
-            );
+          : existing.subCategoryIds.filter((id) => id.id !== subCategoryId);
         if (newSubIds.length === 0) {
-          updated.splice(existingIndex, 1);
-          return updated;
+          return prev.filter((sel) => sel.id !== Number(selectedCategoryId));
         }
-        updated[existingIndex] = {
-          id: Number(selectedCategoryId),
-          name: cat?.name || '',
-          subCategoryIds: newSubIds,
-        };
-        return updated;
+        return prev.map((sel) =>
+          sel.id === Number(selectedCategoryId)
+            ? { ...sel, subCategoryIds: newSubIds }
+            : sel
+        );
       } else {
         return [
           ...prev,
           {
             id: Number(selectedCategoryId),
             name: cat?.name || '',
-            subCategoryIds: [{ id: subCategoryId, name: sub?.name || '' }],
+            subCategoryIds: [
+              {
+                id: subCategoryId,
+                name: sub?.name || '',
+                displayOrder: 1,
+              },
+            ],
+            displayOrder: prev.length + 1,
           },
         ];
       }
@@ -221,28 +234,18 @@ export function MenuForm({
     const data = {
       categorySelections: categorySelections.map((cat) => ({
         categoryId: cat.id,
-        subCategoryIds: Array.from(
-          new Set(cat.subCategoryIds.map((sub) => sub.id))
-        ),
+        displayOrder: cat.displayOrder,
+        subCategories: cat.subCategoryIds.map((sub) => ({
+          id: sub.id,
+          displayOrder: sub.displayOrder,
+        })),
       })),
       menuId: Number(menuId) || 0,
     };
     await updateMenuEntries(data);
-    // const res = isEntitesAdded
-    //   ? await updateMenuEntries(data)
-    //   : await addMenuEntries(data);
-    // console.log(res);
     toast.success('Categories saved!');
     if (onCancel) onCancel();
   };
-
-  const selectedCategories = categorySelections.map(
-    ({ id, name, subCategoryIds }) => ({
-      id,
-      name,
-      subCategories: subCategoryIds,
-    })
-  );
 
   return (
     <div className='space-y-6'>
@@ -454,10 +457,11 @@ export function MenuForm({
                 </div>
               </div>
 
-              {selectedCategories.length > 0 && (
+              {categorySelections.length > 0 && (
                 <div className='space-y-4'>
                   <SelectedCategoryTree
-                    selectedCategories={selectedCategories}
+                    categorySelections={categorySelections}
+                    setCategorySelections={setCategorySelections}
                   />
                 </div>
               )}

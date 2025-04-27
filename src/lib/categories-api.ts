@@ -1,6 +1,6 @@
 import { Category } from '@/types/category';
 import { api } from './api';
-import { CategoryMap } from '@/types/menu';
+import { Categories } from '@/types/menu';
 
 // Function to create a category
 export async function createCategory(categoryData: Omit<Category, 'id'>) {
@@ -47,7 +47,7 @@ export async function deleteCategory(categoryId: string) {
   }
 }
 
-export async function addMenuEntries(data: CategoryMap) {
+export async function addMenuEntries(data: Categories) {
   try {
     const response = await api.post('/api/menuentry/create', data);
     return response.data;
@@ -56,7 +56,9 @@ export async function addMenuEntries(data: CategoryMap) {
   }
 }
 
-export async function updateMenuEntries(data: CategoryMap) {
+export async function updateMenuEntries(
+  data: Partial<Categories> & { menuId: number }
+) {
   try {
     const response = await api.put('/api/menuentry/updatebymenuid', data);
     return response.data;
