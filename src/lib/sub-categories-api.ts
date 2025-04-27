@@ -59,3 +59,21 @@ export async function subCategoryByCategoryId(categoryId: string) {
     throw error;
   }
 }
+
+export async function uploadSubCategoryImage(image: File, subCategoryId: string) {
+  try {
+    const formData = new FormData();
+    formData.append('subCategoryId', subCategoryId);
+    formData.append('subCategoryImageFile', image);
+    const response = await api.post('/api/subcategory/image/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    if (!response.data) throw new Error('Failed to upload image');
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+

@@ -23,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Category } from '@/types/category';
 // import { Menu } from '@/types/menu';
 import { Switch } from '../ui/switch';
+import { uploadImage } from '@/lib/categories-api';
 
 const categorySchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
@@ -30,7 +31,7 @@ const categorySchema = z.object({
   // menuId: z.coerce.number().min(1, { message: 'Please select a menu' }),
   description: z.string().optional(),
   status: z.boolean(),
-  image: z.string().optional(),
+  imagePath: z.string().optional(),
   displayOrder: z.coerce
     .number()
     .min(0, { message: 'Display order must be non-negative' }),
@@ -52,7 +53,7 @@ export function CategoryForm({
   loading,
 }: CategoryFormProps) {
   const [imagePreview, setImagePreview] = useState<string | undefined>(
-    initialData?.image
+    initialData?.imagePath
   );
 
   const form = useForm<z.infer<typeof categorySchema>>({
@@ -62,31 +63,36 @@ export function CategoryForm({
       // menuId: initialData?.menuId || 1,
       description: initialData?.description || '',
       status: initialData?.status || false,
-      image: initialData?.image,
+      imagePath: initialData?.imagePath,
       displayOrder: initialData?.displayOrder || 0,
     },
   });
 
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (file) {
       // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      const image = await uploadImage(file, initialData?.id || '');
+      // console.log(image);
+      // const reader = new FileReader();
+      // reader.onloadend = () => {
+      //   setImagePreview(reader.result as string);
+      // };
+      // reader.readAsDataURL(file);
 
+      setImagePreview(image.data);
       // Set file in form
-      // form.setValue('image', file);
+      form.setValue('imagePath', image.data);
     }
   };
 
   const handleRemoveImage = () => {
     setImagePreview(undefined);
-    form.setValue('image', undefined);
+    form.setValue('imagePath', undefined);
     // Reset file input
-    if (form.getValues('image')) {
+    if (form.getValues('imagePath')) {
       const fileInput = document.getElementById(
         'category-image'
       ) as HTMLInputElement;
@@ -99,7 +105,7 @@ export function CategoryForm({
       ...values,
       id: initialData?.id || '', // Preserve existing ID if editing
       description: values.description || '', // Ensure description is always a string
-      image: values.image, // Pass the uploaded file
+      imagePath: values.imagePath, // Pass the uploaded file
     });
   };
   // console.log(form.getValues('menuId'));
@@ -223,7 +229,7 @@ export function CategoryForm({
               {imagePreview && (
                 <div className='relative h-16 w-16 sm:h-20 sm:w-20 group'>
                   <Image
-                    src={imagePreview}
+                    src={process.env.NEXT_PUBLIC_SERVER_URL + imagePreview}
                     alt='Category Preview'
                     fill
                     className='object-cover rounded-md shadow-sm'

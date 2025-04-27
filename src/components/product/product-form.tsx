@@ -32,6 +32,7 @@ import { Product } from '@/types/product';
 import { Category } from '@/types/category';
 import { SubCategory } from '@/types/sub-category';
 import { subCategoryByCategoryId } from '@/lib/sub-categories-api';
+import { getProductById, uploadProductImage } from '@/lib/products-api';
 
 type ProductFormValues = {
   name: string;
@@ -44,7 +45,7 @@ type ProductFormValues = {
   status: boolean;
   tags?: string[];
   ingredients?: string[];
-  images?: string[];
+  itemsImagePaths?: string[];
   metadata?: string;
 };
 
@@ -63,7 +64,7 @@ const productSchema = z.object({
   status: z.boolean(),
   tags: z.array(z.string()).optional(),
   ingredients: z.array(z.string()).optional(),
-  images: z.array(z.string()).optional(),
+  itemsImagePaths: z.array(z.string()).optional(),
   metadata: z.string().optional(),
 });
 
@@ -83,7 +84,7 @@ export function ProductForm({
 }: ProductFormProps) {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>(
-    initialData?.images || []
+    initialData?.itemsImagePaths || []
   );
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
 
@@ -99,7 +100,7 @@ export function ProductForm({
       status: initialData?.status || false,
       tags: initialData?.tags || [],
       ingredients: initialData?.ingredients || [],
-      images: initialData?.images || [],
+      itemsImagePaths: initialData?.itemsImagePaths || [],
       metadata: initialData?.metadata || '',
     },
   });
@@ -123,10 +124,30 @@ export function ProductForm({
   });
 
   useEffect(() => {
+    const fetchData = async () => {
+      if (initialData?.id) {
+        const { data: product } = await getProductById(initialData.id);
+        form.setValue('name', product.name);
+        form.setValue('description', product.description);
+        form.setValue('price', product.price);
+        form.setValue('displayOrder', product.displayOrder);
+        form.setValue('status', product.status);
+        form.setValue('tags', product.tags || []);
+        form.setValue('ingredients', product.ingredients || []);
+        form.setValue('itemsImagePaths', product.itemsImagePaths || []);
+        form.setValue('metadata', product.metadata || '');
+        setImageUrls(product.itemsImagePaths || []);
+      }
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
     async function fetchSubCategories() {
       const subCategories = await subCategoryByCategoryId(
         String(form.watch('categoryId'))
       );
+
       setSubCategories(subCategories?.data || []);
     }
     if (form.watch('categoryId') !== 0) {
@@ -134,18 +155,24 @@ export function ProductForm({
     }
   }, [form.watch('categoryId')]);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = event.target.files;
     if (!files) return;
-
+    console.log(files);
     const newImageFiles = Array.from(files);
     console.log('Selected Files:', newImageFiles);
+    const res = await uploadProductImage(
+      newImageFiles,
+      initialData?.id?.toString() || ''
+    );
 
     const newImageUrls = newImageFiles.map((file) => URL.createObjectURL(file));
 
     setImageFiles((prev) => [...prev, ...newImageFiles]);
-    setImageUrls((prev) => [...prev, ...newImageUrls]);
-    form.setValue('images', [...imageUrls, ...newImageUrls]);
+    setImageUrls((prev) => [...prev, ...res.data]);
+    form.setValue('itemsImagePaths', [...imageUrls, ...res.data]);
 
     // Cleanup object URLs to prevent memory leaks
     return () => {
@@ -164,7 +191,7 @@ export function ProductForm({
 
     setImageFiles(updatedFiles);
     setImageUrls(updatedUrls);
-    form.setValue('images', updatedUrls);
+    form.setValue('itemsImagePaths', updatedUrls);
   };
 
   const handleSubmit: SubmitHandler<ProductFormValues> = (values) => {
@@ -440,7 +467,7 @@ export function ProductForm({
               {imageUrls.map((url, index) => (
                 <div key={index} className='relative w-full h-24'>
                   <Image
-                    src={url}
+                    src={process.env.NEXT_PUBLIC_SERVER_URL + url}
                     alt={`Product image ${index + 1}`}
                     fill
                     className='object-cover rounded'

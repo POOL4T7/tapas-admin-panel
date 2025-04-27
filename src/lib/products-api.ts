@@ -39,6 +39,16 @@ export async function getAllProducts() {
     throw error;
   }
 }
+// Function to get  specific product
+export async function getProductById(productId: string) {
+  try {
+    const response = await api.get(`api/item/${productId}`);
+    return response.data;
+  } catch (error) {
+    // Handle error as needed (could expand this based on your error handling strategy)
+    throw error;
+  }
+}
 
 export async function getProductsByMenu(menuId: string) {
   try {
@@ -62,6 +72,25 @@ export async function updateProductByMenuId(
     return response.data;
   } catch (error) {
     // Handle error as needed (could expand this based on your error handling strategy)
+    throw error;
+  }
+}
+
+export async function uploadProductImage(images: File[], itemId: string) {
+  try {
+    const formData = new FormData();
+    formData.append('itemId', itemId);
+    images.forEach((image) => {
+      formData.append('itemImageFiles', image);
+    });
+    const response = await api.post('/api/item/image/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    if (!response.data) throw new Error('Failed to upload image');
+    return response.data;
+  } catch (error) {
     throw error;
   }
 }

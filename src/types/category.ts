@@ -3,6 +3,6 @@ export type Category = {
   name: string;
   description?: string;
   status: boolean;
-  image?: string;
+  imagePath?: string;
   displayOrder: number;
 };

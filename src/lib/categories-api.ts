@@ -72,3 +72,20 @@ export async function getMenuEntries(menuId: string) {
     throw error;
   }
 }
+
+export async function uploadImage(image: File, categoryId: string) {
+  try {
+    const formData = new FormData();
+    formData.append('categoryId', categoryId);
+    formData.append('categoryImageFile', image);
+    const response = await api.post('api/category/image/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    if (!response.data) throw new Error('Failed to upload image');
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}

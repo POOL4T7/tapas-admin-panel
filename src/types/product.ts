@@ -11,7 +11,7 @@ export type Product = {
   // New fields
   tags?: string[];
   ingredients?: string[];
-  images?: string[];
+  itemsImagePaths?: string[];
   metadata?: string;
 };
 

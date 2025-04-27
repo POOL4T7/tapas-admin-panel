@@ -27,6 +27,7 @@ import { Category } from '@/types/category';
 import { ImagePlus, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { Switch } from '../ui/switch';
+import { uploadSubCategoryImage } from '@/lib/sub-categories-api';
 
 const subCategorySchema = z.object({
   // menuId: z.coerce.number({ required_error: 'Please select a menu' }),
@@ -76,15 +77,15 @@ export function SubCategoryForm({
     },
   });
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-        form.setValue('image', reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      const res = await uploadSubCategoryImage(
+        file,
+        String(initialData?.id) || ''
+      );
+      setImagePreview(res.data);
+      form.setValue('image', res.data);
     }
   };
 
@@ -254,7 +255,7 @@ export function SubCategoryForm({
               {imagePreview && (
                 <div className='relative h-16 w-16 sm:h-20 sm:w-20 group'>
                   <Image
-                    src={imagePreview}
+                    src={process.env.NEXT_PUBLIC_SERVER_URL + imagePreview}
                     alt='Sub Category Preview'
                     fill
                     className='object-cover rounded-md shadow-sm'
