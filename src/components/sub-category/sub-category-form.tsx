@@ -89,6 +89,7 @@ export function SubCategoryForm({
   };
 
   const handleSubmit = async (values: z.infer<typeof subCategorySchema>) => {
+    console.log(values);
     await onSubmit({
       ...values,
       id: initialData?.id || 0, // Preserve existing ID if editing

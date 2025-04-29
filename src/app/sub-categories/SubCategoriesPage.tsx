@@ -144,6 +144,7 @@ export default function SubCategoriesPage() {
   const handleEditSubCategory = async (updatedCategory: SubCategory) => {
     setLoading(true);
     try {
+      console.log(updatedCategory);
       const updated = await updateSubCategory(
         String(updatedCategory.id),
         updatedCategory
@@ -260,7 +261,7 @@ export default function SubCategoriesPage() {
                 initialData={editingSubCategory}
                 onSubmit={async (data) => {
                   if (editingSubCategory) {
-                    await handleEditSubCategory(editingSubCategory);
+                    await handleEditSubCategory(data);
                   } else {
                     await handleCreateSubCategory(data);
                   }

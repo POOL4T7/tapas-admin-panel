@@ -16,7 +16,7 @@ export async function createSubCategory(
 // Function to update a sub-category
 export async function updateSubCategory(
   subCategoryId: string,
-  subCategoryData: Omit<SubCategory, 'id'>
+  subCategoryData: SubCategory
 ) {
   try {
     const response = await api.put(
