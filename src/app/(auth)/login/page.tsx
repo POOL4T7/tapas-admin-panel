@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { login } from '@/lib/auth';
+import { useAuth } from '@/context/AuthContext';
 
 const formSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -27,6 +27,7 @@ const formSchema = z.object({
 
 export default function LoginPage() {
   const router = useRouter();
+  const { loginUser } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -38,8 +39,7 @@ export default function LoginPage() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const res = await login(values);
-      console.log('Login submitted', values, res);
+      await loginUser(values.email, values.password);
       toast.success('Login Successful', {
         description: 'Welcome back!',
       });

@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
 
 const formSchema = z
   .object({
@@ -32,7 +33,7 @@ const formSchema = z
 
 export default function RegisterPage() {
   const router = useRouter();
-  // const { toast } = useToast();
+  const { signupUser } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,16 +47,15 @@ export default function RegisterPage() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // TODO: Implement actual registration logic
-      console.log('Registration submitted', values);
+      await signupUser(values.name, values.email, values.password);
       toast.success('Registration Successful', {
         description: 'Welcome to Tapas Admin!',
       });
-      router.push('/login');
+      router.push('/menu');
     } catch (error: unknown) {
       console.error(error);
       toast.error('Registration Failed', {
-        description: 'Unable to create account',
+        description: error instanceof Error ? error.message : 'Please try again',
       });
     }
   };
@@ -70,10 +70,10 @@ export default function RegisterPage() {
           </p>
         </div>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <FormField
               control={form.control}
-              name='name'
+              name="name"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>

@@ -1,57 +1,100 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
-import { LoginData } from '@/types/auth';
+'use client';
+
+import React, {
+  createContext,
+  useState,
+  useContext,
+  ReactNode,
+  useEffect,
+} from 'react';
+import { LoginData, LoginResponse } from '@/types/auth';
+import { login, logout, register } from '@/lib/auth';
+
 // Define the type for user authentication state
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: LoginData;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
-  signup: (email: string, password: string, name: string) => Promise<boolean>;
+  user: LoginData | null;
+  loginUser: (email: string, password: string) => Promise<LoginResponse>;
+  logoutUser: () => Promise<void>;
+  signupUser: (
+    name: string,
+    email: string,
+    password: string
+  ) => Promise<LoginResponse>;
 }
 
+// Create the context with a default undefined value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// AuthProvider component
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<LoginData | null>(null);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  useEffect(() => {
+    // Check authentication status on mount
+    const checkAuthStatus = () => {
+      const token = document.cookie.includes('token');
+      setIsAuthenticated(token);
+    };
+
+    checkAuthStatus();
+  }, []);
+
+  const loginUser = async (
+    email: string,
+    password: string
+  ): Promise<LoginResponse> => {
     try {
-      // TODO: Replace with actual backend authentication logic
-      if (email === 'admin@example.com' && password === 'adminpassword') {
-        setIsAuthenticated(true);
-        setUser({ email, password });
-        return true;
-      }
-      return false;
+      const response = await login({ email, password });
+      setIsAuthenticated(true);
+      setUser(response.user);
+      return response;
     } catch (error) {
-      console.error('Login failed', error);
-      return false;
+      setIsAuthenticated(false);
+      setUser(null);
+      throw error;
     }
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
+  const logoutUser = async () => {
+    try {
+      await logout();
+      setIsAuthenticated(false);
+      setUser(null);
+    } catch (error) {
+      console.error('Logout failed', error);
+    }
   };
 
-  const signup = async (email: string, password: string): Promise<boolean> => {
+  const signupUser = async (
+    name: string,
+    email: string,
+    password: string
+  ): Promise<LoginResponse> => {
     try {
-      // TODO: Replace with actual backend signup logic
+      const response = await register({ name, email, password });
       setIsAuthenticated(true);
-      setUser({ email, password });
-      return true;
+      setUser(response.user);
+      return response;
     } catch (error) {
-      console.error('Signup failed', error);
-      return false;
+      setIsAuthenticated(false);
+      setUser(null);
+      throw error;
     }
   };
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, user: user!, login, logout, signup }}
+      value={{
+        isAuthenticated,
+        user,
+        loginUser,
+        logoutUser,
+        signupUser,
+      }}
     >
       {children}
     </AuthContext.Provider>

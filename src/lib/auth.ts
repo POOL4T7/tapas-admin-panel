@@ -1,10 +1,8 @@
 import { RegisterData, LoginData } from '@/types/auth';
 import { api } from './api';
-// import { cookies } from 'next/headers';
 
 export async function register(values: RegisterData) {
   try {
-    // TODO: Implement actual registration logic
     const res = await api.post('/api/auth/register', values);
     console.log('Registration submitted', values);
     return res.data;
@@ -16,15 +14,16 @@ export async function register(values: RegisterData) {
 
 export async function login(values: LoginData) {
   try {
-    // TODO: Implement actual login logic
     const res = await api.post('/api/auth/login', values);
     console.log('Login submitted', values);
-    // const cookieStore = await cookies();
-    // cookieStore.set('token', res.data.token, {
-    //   httpOnly: true,
-    //   sameSite: 'strict',
-    //   maxAge: 60 * 60 * 24 * 30,
-    // });
+
+    // Client-side cookie management
+    document.cookie = `token=${res.data.token}; path=/; max-age=${
+      60 * 60 * 24 * 30
+    }; ${
+      process.env.NODE_ENV === 'production' ? 'secure; ' : ''
+    }httpOnly; sameSite=strict`;
+
     return res.data;
   } catch (error: unknown) {
     console.error(error);
@@ -34,12 +33,11 @@ export async function login(values: LoginData) {
 
 export async function logout() {
   try {
-    // const cookieStore = await cookies();
-    // cookieStore.delete('token');
+    // Client-side cookie deletion
+    document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     return true;
   } catch (error: unknown) {
     console.error(error);
     throw error;
   }
 }
-
