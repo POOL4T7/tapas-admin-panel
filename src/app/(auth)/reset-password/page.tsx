@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -33,7 +33,7 @@ const resetPasswordSchema = z
     path: ['confirmPassword'],
   });
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -149,6 +149,16 @@ export default function ResetPasswordPage() {
           </form>
         </Form>
       </div>
+    </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <div className='flex min-h-screen items-center justify-center bg-gray-100 p-4'>
+      <Suspense fallback={<div>Loading reset password form...</div>}>
+        <ResetPasswordForm />
+      </Suspense>
     </div>
   );
 }
