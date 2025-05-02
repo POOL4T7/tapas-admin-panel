@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +27,7 @@ const formSchema = z.object({
 });
 
 export default function LoginPage() {
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { loginUser } = useAuth();
 
@@ -38,17 +40,35 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsLoading(true);
     try {
-      await loginUser(values.email, values.password);
+      const res = await loginUser(values.email, values.password);
+      
+      // Server-side cookie setting via API route
+      const cookieResponse = await fetch('/api/auth/set-cookie', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token: res.data.token }),
+      });
+
+      if (!cookieResponse.ok) {
+        throw new Error('Failed to set authentication cookie');
+      }
+
       toast.success('Login Successful', {
         description: 'Welcome back!',
       });
+
       router.push('/menu');
     } catch (error: unknown) {
       console.error(error);
       toast.error('Login Failed', {
         description: 'Invalid credentials',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -93,8 +113,8 @@ export default function LoginPage() {
                 </FormItem>
               )}
             />
-            <Button type='submit' className='w-full'>
-              Login
+            <Button type='submit' disabled={isLoading} className='w-full'>
+              {isLoading ? 'Logging in...' : 'Login'}
             </Button>
           </form>
         </Form>

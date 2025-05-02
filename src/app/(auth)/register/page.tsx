@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,9 +20,19 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 
-const formSchema = z
+// Define error type for API responses
+type ApiError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+};
+
+// Registration Form Schema
+const registrationSchema = z
   .object({
-    name: z.string().min(2, 'Name must be at least 2 characters'),
     email: z.string().email('Invalid email address'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
     confirmPassword: z.string(),
@@ -32,35 +43,44 @@ const formSchema = z
   });
 
 export default function RegisterPage() {
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { signupUser } = useAuth();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  // Registration Form
+  const registrationForm = useForm<z.infer<typeof registrationSchema>>({
+    resolver: zodResolver(registrationSchema),
     defaultValues: {
-      name: '',
       email: '',
       password: '',
       confirmPassword: '',
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  // Registration Submit Handler
+  const onRegistrationSubmit = async (
+    values: z.infer<typeof registrationSchema>
+  ) => {
+    setIsLoading(true);
     try {
-      await signupUser(values.name, values.email, values.password);
-      toast.success('Registration Successful', {
-        description: 'Welcome to Tapas Admin!',
+      await signupUser(values.email, values.password);
+      router.push(`/verify?email=${encodeURIComponent(values.email)}`);
+      toast.info('Verification Code Sent', {
+        description: 'Please check your email for the verification code',
       });
-      router.push('/menu');
     } catch (error: unknown) {
-      console.error(error);
+      const err = error as ApiError;
       toast.error('Registration Failed', {
-        description: error instanceof Error ? error.message : 'Please try again',
+        description:
+          err?.response?.data?.message || err?.message || 'Please try again',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  return (
+  // Registration Step
+  const renderRegistrationStep = () => (
     <div className='flex min-h-screen items-center justify-center bg-gray-100 p-4'>
       <div className='w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-md'>
         <div className='text-center'>
@@ -69,36 +89,31 @@ export default function RegisterPage() {
             Create your Tapas Admin account
           </p>
         </div>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <Form {...registrationForm}>
+          <form
+            onSubmit={registrationForm.handleSubmit(onRegistrationSubmit)}
+            className='space-y-6'
+          >
             <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder='Your full name' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
+              control={registrationForm.control}
               name='email'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder='you@example.com' {...field} />
+                    <Input
+                      placeholder='your@email.com'
+                      type='email'
+                      {...field}
+                      disabled={isLoading}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <FormField
-              control={form.control}
+              control={registrationForm.control}
               name='password'
               render={({ field }) => (
                 <FormItem>
@@ -106,8 +121,9 @@ export default function RegisterPage() {
                   <FormControl>
                     <Input
                       type='password'
-                      placeholder='Create a password'
+                      placeholder='Password'
                       {...field}
+                      disabled={isLoading}
                     />
                   </FormControl>
                   <FormMessage />
@@ -115,7 +131,7 @@ export default function RegisterPage() {
               )}
             />
             <FormField
-              control={form.control}
+              control={registrationForm.control}
               name='confirmPassword'
               render={({ field }) => (
                 <FormItem>
@@ -123,28 +139,32 @@ export default function RegisterPage() {
                   <FormControl>
                     <Input
                       type='password'
-                      placeholder='Confirm your password'
+                      placeholder='Confirm Password'
                       {...field}
+                      disabled={isLoading}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type='submit' className='w-full'>
-              Create Account
+
+            <Button type='submit' className='w-full' disabled={isLoading}>
+              {isLoading ? 'Processing...' : 'Continue'}
             </Button>
+            <div className='text-center mt-4'>
+              <Link
+                href='/login'
+                className='text-sm text-blue-600 hover:underline'
+              >
+                Already have an account? Login
+              </Link>
+            </div>
           </form>
         </Form>
-        <div className='text-center'>
-          <p className='text-sm text-gray-600'>
-            Already have an account?{' '}
-            <Link href='/login' className='text-blue-600 hover:underline'>
-              Login
-            </Link>
-          </p>
-        </div>
       </div>
     </div>
   );
+
+  return renderRegistrationStep();
 }

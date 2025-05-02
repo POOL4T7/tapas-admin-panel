@@ -1,18 +1,18 @@
 export interface RegisterData {
-  name: string;
   email: string;
   password: string;
+  optIn?: boolean;
 }
 
 export interface LoginData {
   id?: string;
   email: string;
-  password?: string;
-  name?: string;
   token?: string;
+  role?: string;
+  password?: string;
 }
 
 export interface LoginResponse {
-  user: LoginData;
-  token: string;
+  data: LoginData;
+  message: string;
 }

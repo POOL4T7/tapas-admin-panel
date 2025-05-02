@@ -8,7 +8,7 @@ import React, {
   useEffect,
 } from 'react';
 import { LoginData, LoginResponse } from '@/types/auth';
-import { login, logout, register } from '@/lib/auth';
+import { login, otpVerifyApi, register } from '@/lib/auth';
 
 // Define the type for user authentication state
 interface AuthContextType {
@@ -16,11 +16,8 @@ interface AuthContextType {
   user: LoginData | null;
   loginUser: (email: string, password: string) => Promise<LoginResponse>;
   logoutUser: () => Promise<void>;
-  signupUser: (
-    name: string,
-    email: string,
-    password: string
-  ) => Promise<LoginResponse>;
+  signupUser: (email: string, password: string) => Promise<LoginResponse>;
+  otpVerify: (email: string, otp: string) => Promise<LoginResponse>;
 }
 
 // Create the context with a default undefined value
@@ -49,6 +46,43 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   ): Promise<LoginResponse> => {
     try {
       const response = await login({ email, password });
+      localStorage.setItem('userDetails', JSON.stringify(response.data));
+      setIsAuthenticated(true);
+      setUser(response.data);
+      return response;
+    } catch (error) {
+      setIsAuthenticated(false);
+      setUser(null);
+      throw error;
+    }
+  };
+
+  const logoutUser = async (): Promise<void> => {
+    try {
+      // Clear local storage
+      localStorage.removeItem('userDetails');
+
+      // Clear authentication state
+      setIsAuthenticated(false);
+      setUser(null);
+
+      // Clear token cookie via API
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include', // Important for sending cookies
+      });
+    } catch (error) {
+      console.error('Logout failed', error);
+      throw error;
+    }
+  };
+
+  const signupUser = async (
+    email: string,
+    password: string
+  ): Promise<LoginResponse> => {
+    try {
+      const response = await register({ email, password });
       setIsAuthenticated(true);
       setUser(response.user);
       return response;
@@ -59,23 +93,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const logoutUser = async () => {
-    try {
-      await logout();
-      setIsAuthenticated(false);
-      setUser(null);
-    } catch (error) {
-      console.error('Logout failed', error);
-    }
-  };
-
-  const signupUser = async (
-    name: string,
+  const otpVerify = async (
     email: string,
-    password: string
+    otp: string
   ): Promise<LoginResponse> => {
     try {
-      const response = await register({ name, email, password });
+      const response = await otpVerifyApi({ email, otp });
       setIsAuthenticated(true);
       setUser(response.user);
       return response;
@@ -94,6 +117,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         loginUser,
         logoutUser,
         signupUser,
+        otpVerify,
       }}
     >
       {children}
