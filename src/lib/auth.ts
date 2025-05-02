@@ -51,3 +51,24 @@ export async function logout() {
     throw error;
   }
 }
+
+export async function forgotPassword(email: string) {
+  try {
+    const res = await api.post('/api/user/forgot-password', { email });
+    console.log('Forgot password submitted', email);
+    return res.data;
+  } catch (error: unknown) {
+    console.error(error);
+    throw error;
+  }
+}
+export async function resetPassword(email: string, otp: string, newPassword: string) {
+  try {
+    const res = await api.post('/api/user/reset-password', { email, otp, newPassword });
+    console.log('Reset password submitted', email);
+    return res.data;
+  } catch (error: unknown) {
+    console.error(error);
+    throw error;
+  }
+}

@@ -20,6 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
+import { ApiError } from '@/types/common';
 
 const formSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -43,7 +44,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const res = await loginUser(values.email, values.password);
-      
+
       // Server-side cookie setting via API route
       const cookieResponse = await fetch('/api/auth/set-cookie', {
         method: 'POST',
@@ -57,15 +58,16 @@ export default function LoginPage() {
         throw new Error('Failed to set authentication cookie');
       }
 
-      toast.success('Login Successful', {
-        description: 'Welcome back!',
-      });
+      // toast.success('Login Successful', {
+      //   description: 'Welcome back!',
+      // });
 
       router.push('/menu');
     } catch (error: unknown) {
       console.error(error);
       toast.error('Login Failed', {
-        description: 'Invalid credentials',
+        description:
+          (error as ApiError)?.response?.data?.message || 'Invalid credentials',
       });
     } finally {
       setIsLoading(false);
