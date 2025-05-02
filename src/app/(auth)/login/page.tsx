@@ -115,19 +115,25 @@ export default function LoginPage() {
                 </FormItem>
               )}
             />
-            <Button type='submit' disabled={isLoading} className='w-full'>
+            <Button type='submit' className='w-full' disabled={isLoading}>
               {isLoading ? 'Logging in...' : 'Login'}
             </Button>
+            <div className='text-center mt-4 space-y-2'>
+              <Link 
+                href='/forgot-password' 
+                className='text-sm text-blue-600 hover:underline block'
+              >
+                Forgot Password?
+              </Link>
+              <p className='text-sm text-gray-600'>
+                Don&apos;t have an account?{' '}
+                <Link href='/register' className='text-blue-600 hover:underline'>
+                  Register
+                </Link>
+              </p>
+            </div>
           </form>
         </Form>
-        <div className='text-center'>
-          <p className='text-sm text-gray-600'>
-            Don&apos;t have an account?{' '}
-            <Link href='/register' className='text-blue-600 hover:underline'>
-              Register
-            </Link>
-          </p>
-        </div>
       </div>
     </div>
   );
