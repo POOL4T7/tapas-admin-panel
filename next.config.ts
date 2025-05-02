@@ -5,8 +5,8 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: '/api/:path*', // requests to /api/* will be proxied
-        destination: 'http://103.174.103.132:7250/api/:path*', // Proxy to Backend
+        source: '/altmariendorf/api/:path*', // requests to /api/* will be proxied
+        destination: 'http://103.174.103.132:7250/altmariendorf/api/:path*', // Proxy to Backend
       },
     ];
   },
