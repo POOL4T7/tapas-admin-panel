@@ -60,7 +60,7 @@ export function Header({ toggleSidebar }: { toggleSidebar: () => void }) {
             </Avatar> */}
             <Button
               variant='ghost'
-              size='icon'
+              // size='icon'
               className='flex items-center space-x-1 text-white hover:bg-white/10'
               onClick={handleLogout}
             >
