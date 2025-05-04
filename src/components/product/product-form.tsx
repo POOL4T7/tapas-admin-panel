@@ -4,7 +4,7 @@ import { useForm, useFieldArray, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Image from 'next/image';
-import { toast } from 'sonner';
+// import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -212,11 +212,11 @@ export function ProductForm({
       ingredients:
         values.ingredients?.filter((ingredient) => ingredient.trim() !== '') ||
         [],
-      images: imageUrls.filter((url) => url.trim() !== ''),
+      itemsImagePaths: imageUrls.filter((url) => url.trim() !== ''),
     };
 
     onSubmit(submissionData);
-    toast.success(`${initialData ? 'Product updated' : 'Product created'}!`);
+    // toast.success(`${initialData ? 'Product updated' : 'Product created'}!`);
   };
 
   return (
