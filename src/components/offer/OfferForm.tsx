@@ -242,7 +242,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
             name='foodItemsPrice'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Food Items Price</FormLabel>
+                <FormLabel>Food Items Price (€)</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -313,7 +313,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
             name='drinkItemsPrice'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Drink Items Price</FormLabel>
+                <FormLabel>Drink Items Price (€)</FormLabel>
                 <FormControl>
                   <Input
                     {...field}

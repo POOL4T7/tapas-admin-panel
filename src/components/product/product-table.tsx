@@ -19,6 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { formatPrice } from '@/lib/utils';
 
 interface ProductTableProps {
   products: Product[];
@@ -47,13 +48,6 @@ export function ProductTable({
     'Status',
     'Actions',
   ];
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(price);
-  };
 
   return (
     <TooltipProvider>

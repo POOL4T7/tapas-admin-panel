@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/select';
 import { Package, Loader2, Filter } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatPrice } from '@/lib/utils';
 
 const Page = () => {
   const { id } = useParams();
@@ -166,6 +167,7 @@ const Page = () => {
 
     if (itemsToUpdateForAPI.length > 0) {
       await updateMenuEntityDisplayOrder(itemsToUpdateForAPI);
+      toast.success('Menu Items order updated successfully!');
     } else {
       toast.info('No changes in order to save.');
     }
@@ -186,13 +188,6 @@ const Page = () => {
   //     toast.error('Failed to update product order.');
   //   }
   // };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(price);
-  };
 
   const toggleStatus = async (
     menuId: number,
@@ -327,15 +322,9 @@ const Page = () => {
                     <TableCell className='font-medium'>
                       {product.item.name}
                     </TableCell>
-                    <TableCell className='font-medium'>
-                      {product.category.name}
-                    </TableCell>
-                    <TableCell className='font-medium'>
-                      {product.subCategory.name}
-                    </TableCell>
-                    <TableCell className='font-mono'>
-                      {formatPrice(product.item.price)}
-                    </TableCell>
+                    <TableCell>{product.category.name}</TableCell>
+                    <TableCell>{product.subCategory.name}</TableCell>
+                    <TableCell>{formatPrice(product.item.price)}</TableCell>
                     <TableCell>
                       <Tooltip>
                         <TooltipTrigger>

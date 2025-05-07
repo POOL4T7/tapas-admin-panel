@@ -18,3 +18,11 @@ export const generateSlug = (text: string) => {
     .replace(/^-+/, '') // Remove leading hyphens
     .replace(/-+$/, ''); // Remove trailing hyphens
 };
+
+export const formatPrice = (price: number) => {
+  return new Intl.NumberFormat('nl-NL', {
+    style: 'currency',
+    currency: 'EUR',
+    currencyDisplay: 'narrowSymbol',
+  }).format(price);
+};

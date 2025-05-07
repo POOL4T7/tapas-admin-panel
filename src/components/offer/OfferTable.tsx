@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/tooltip';
 // import Image from 'next/image';
 import React from 'react';
+import { formatPrice } from '@/lib/utils';
 
 interface OfferTableProps {
   offers: Offer[];
@@ -104,11 +105,15 @@ export function OfferTable({
                   <TableCell className='truncate max-w-xs'>
                     {offer.foodItemsInfo}
                   </TableCell>
-                  <TableCell>{offer.foodItemsPrice}</TableCell>
+                  <TableCell>
+                    {formatPrice(Number(offer.foodItemsPrice))}
+                  </TableCell>
                   <TableCell className='truncate max-w-xs'>
                     {offer.drinkItemsInfo}
                   </TableCell>
-                  <TableCell>{offer.drinkItemsPrice}</TableCell>
+                  <TableCell>
+                    {formatPrice(Number(offer.drinkItemsPrice))}
+                  </TableCell>
                   <TableCell>
                     <Tooltip>
                       <TooltipTrigger>
