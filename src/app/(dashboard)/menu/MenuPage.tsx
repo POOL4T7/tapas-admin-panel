@@ -25,7 +25,7 @@ export default function MenusPage() {
   // const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMenu, setEditingMenu] = useState<Menu | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Fetch menus from the backend
@@ -115,17 +115,6 @@ export default function MenusPage() {
     setMenus(menus.filter((m) => m.id !== menu.id));
   };
 
-  const handleReorder = (oldIndex: number, newIndex: number) => {
-    const updatedMenus = [...menus];
-    const [movedMenu] = updatedMenus.splice(oldIndex, 1);
-    updatedMenus.splice(newIndex, 0, movedMenu);
-    // Update display orders
-    const reorderedMenus = updatedMenus.map((menu, index) => ({
-      ...menu,
-      displayOrder: index + 1,
-    }));
-    setMenus(reorderedMenus);
-  };
 
   const toggleStatus = async (menu: Menu) => {
     try {
@@ -178,8 +167,8 @@ export default function MenusPage() {
           setIsDialogOpen(true);
         }}
         onDelete={handleDeleteMenu}
-        onReorder={handleReorder}
         onStatusToggle={toggleStatus}
+        isLoading={loading}
       />
     </div>
   );

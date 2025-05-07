@@ -38,9 +38,11 @@ import {
   getMenuEntries,
   updateMenuEntries,
 } from '@/lib/categories-api';
+import { generateSlug } from '@/lib/utils';
 
 const menuSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
+  slug: z.string().min(2, { message: 'Slug must be at least 2 characters' }),
   description: z.string().optional(),
   tagLine: z.string().optional(),
   metadata: z.string().optional(),
@@ -69,6 +71,7 @@ export function MenuForm({
     resolver: zodResolver(menuSchema),
     defaultValues: {
       name: '',
+      slug: '',
       description: '',
       status: true,
       displayOrder: 1,
@@ -76,6 +79,15 @@ export function MenuForm({
       tagLine: '',
     },
   });
+
+  const nameValue = form.watch('name');
+
+  useEffect(() => {
+    if (nameValue) {
+      const generatedSlug = generateSlug(nameValue);
+      form.setValue('slug', generatedSlug);
+    }
+  }, [nameValue, form]);
 
   const [step, setStep] = useState<'basic' | 'category'>('basic');
   const [menuId, setMenuId] = useState(oldMenuId || '');
@@ -85,6 +97,7 @@ export function MenuForm({
       ...values,
       id: menuId || '',
       description: values.description || '',
+      slug: values.slug || '',
       tagLine: values.tagLine || '',
       metadata: values.metadata || '',
     });
@@ -142,6 +155,7 @@ export function MenuForm({
           form.setValue('displayOrder', data?.data?.displayOrder || 1);
           form.setValue('tagLine', data?.data?.tagLine || '');
           form.setValue('metadata', data?.data?.metadata || '');
+          form.setValue('slug', data?.data?.slug || '');
 
           const initialSelections =
             categoriesResponse?.data?.categories?.map(
@@ -275,6 +289,20 @@ export function MenuForm({
                     <FormLabel>Menu Name</FormLabel>
                     <FormControl>
                       <Input placeholder='Enter menu name' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='slug'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Slug</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Enter slug' {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

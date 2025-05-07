@@ -44,6 +44,7 @@ export function DraggableTable({ items, onReorder, children, headers }: Props) {
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
+      
     >
       <Table>
         <TableHeader>

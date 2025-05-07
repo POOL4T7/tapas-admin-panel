@@ -315,6 +315,7 @@ export default function ProductsPage() {
         onDelete={handleDeleteProduct}
         // onReorder={handleReorder}
         onStatusToggle={toggleStatus}
+        isLoading={loading}
       />
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

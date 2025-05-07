@@ -21,6 +21,7 @@ export type Menu = {
   // categories: Categories[];
   tagLine: string | null;
   metadata: string | null;
+  slug: string;
   // subCategories: SubCategory[];
 };
 

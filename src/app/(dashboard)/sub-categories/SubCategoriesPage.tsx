@@ -290,6 +290,7 @@ export default function SubCategoriesPage() {
         onDelete={handleDeleteSubCategory}
         // onReorder={handleReorder}
         onStatusToggle={toggleStatus}
+        isLoading={loading}
       />
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>

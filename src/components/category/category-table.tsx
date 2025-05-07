@@ -1,8 +1,15 @@
 import { Category } from '@/types/category';
 // import { Menu } from '@/types/menu';
-import { TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableBody,
+} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash, Menu as MenuIcon, Info } from 'lucide-react';
+import { Edit, Trash, Menu as MenuIcon, Info, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
@@ -17,6 +24,7 @@ interface CategoryTableProps {
   onEdit: (category: Category) => void;
   onDelete: (category: Category) => void;
   onStatusToggle: (category: Category) => void;
+  isLoading?: boolean;
 }
 
 export function CategoryTable({
@@ -24,42 +32,63 @@ export function CategoryTable({
   onEdit,
   onDelete,
   onStatusToggle,
+  isLoading,
 }: CategoryTableProps) {
   const headers = ['S.No', 'Name', 'Description', 'Status', 'Actions'];
 
   return (
     <TooltipProvider>
-      <div className='rounded-lg border overflow-hidden bg-white w-full'>
-        <div className='overflow-x-auto w-full'>
-          <table className='min-w-full divide-y divide-gray-200'>
-            <thead className='bg-gray-50'>
-              <tr>
-                {headers.map((header, idx) => (
-                  <th
-                    key={header}
-                    className={
-                      'px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider' +
-                      (idx === 0 || header === 'Status' || header === 'Actions'
-                        ? ' whitespace-nowrap'
-                        : '')
-                    }
-                  >
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {categories.map((category, index) => {
+      <div className='rounded-md shadow-sm'>
+        {' '}
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {headers.map((header) => (
+                <TableHead key={header}>{header}</TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell
+                  colSpan={headers.length}
+                  className='h-24 text-center'
+                >
+                  <div className='flex flex-col items-center justify-center'>
+                    <Loader2 className='h-8 w-8 animate-spin text-primary mb-3' />
+                    <p className='text-lg font-medium'>Loading categories...</p>
+                    <p className='text-sm text-muted-foreground mt-1'>
+                      Please wait while we fetch the category data.
+                    </p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : categories.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={headers.length}
+                  className='h-36 text-center align-middle'
+                >
+                  <div className='flex flex-col items-center justify-center py-12 text-center'>
+                    <div className='rounded-full bg-slate-100 p-3 mb-3'>
+                      <MenuIcon className='h-6 w-6 text-slate-400' />
+                    </div>
+                    <h3 className='text-lg font-medium'>No categories found</h3>
+                    <p className='text-sm text-muted-foreground mt-1'>
+                      Create a category to get started.
+                    </p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              categories.map((category, index) => {
                 return (
-                  <tr
-                    key={category.id}
-                    className='[&>td]:py-1 hover:bg-gray-50 transition-colors duration-150'
-                  >
-                    <TableCell className='font-mono text-xs border-b border-gray-100 whitespace-nowrap'>
+                  <TableRow key={category.id}>
+                    <TableCell className='text-center font-mono text-sm'>
                       <span className='ml-5'>{index + 1}</span>
                     </TableCell>
-                    <TableCell className='font-normal text-sm border-b border-gray-100'>
+                    <TableCell className='font-medium'>
                       {category.name}
                     </TableCell>
 
@@ -92,7 +121,7 @@ export function CategoryTable({
                         </span>
                       )}
                     </TableCell>
-                    <TableCell className='border-b border-gray-100 whitespace-nowrap'>
+                    <TableCell>
                       <Tooltip>
                         <TooltipTrigger>
                           <Switch
@@ -105,7 +134,7 @@ export function CategoryTable({
                         </TooltipContent>
                       </Tooltip>
                     </TableCell>
-                    <TableCell className='border-b border-gray-100 whitespace-nowrap'>
+                    <TableCell>
                       <div className='flex items-center gap-1'>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -136,23 +165,13 @@ export function CategoryTable({
                         </Tooltip>
                       </div>
                     </TableCell>
-                  </tr>
+                  </TableRow>
                 );
-              })}
-            </tbody>
-          </table>
-          {categories.length === 0 && (
-            <div className='flex flex-col items-center justify-center py-12 text-center'>
-              <div className='rounded-full bg-slate-100 p-3 mb-3'>
-                <MenuIcon className='h-6 w-6 text-slate-400' />
-              </div>
-              <h3 className='text-lg font-medium'>No categories found</h3>
-              <p className='text-sm text-muted-foreground mt-1'>
-                Create a category to get started
-              </p>
-            </div>
-          )}
-        </div>
+              })
+            )}
+          </TableBody>
+        </Table>
+        {/* The "No categories found" message is now handled within the table body */}
       </div>
     </TooltipProvider>
   );

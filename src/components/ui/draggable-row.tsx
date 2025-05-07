@@ -5,9 +5,10 @@ import { GripVertical } from 'lucide-react';
 interface Props {
   id: string;
   children: React.ReactNode;
+  isDragDisabled?: boolean;
 }
 
-export function DraggableRow({ id, children }: Props) {
+export function DraggableRow({ id, children, isDragDisabled }: Props) {
   const {
     attributes,
     listeners,
@@ -15,7 +16,7 @@ export function DraggableRow({ id, children }: Props) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id });
+  } = useSortable({ id, disabled: isDragDisabled });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -25,13 +26,17 @@ export function DraggableRow({ id, children }: Props) {
 
   return (
     <tr ref={setNodeRef} style={style}>
-      <td className="w-[50px] p-2">
+      <td className='w-[50px] p-2'>
         <button
-          className="cursor-grab hover:cursor-grabbing focus:outline-none"
+          className={
+            isDragDisabled
+              ? 'cursor-not-allowed opacity-50'
+              : 'cursor-grab hover:cursor-grabbing focus:outline-none'
+          }
           {...attributes}
           {...listeners}
         >
-          <GripVertical className="h-4 w-4 text-gray-500" />
+          <GripVertical className='h-4 w-4 text-gray-500' />
         </button>
       </td>
       {children}

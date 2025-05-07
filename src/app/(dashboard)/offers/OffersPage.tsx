@@ -116,15 +116,6 @@ export default function OffersPage() {
     setOfferToDelete(null);
   };
 
-  const handleReorder = (oldIndex: number, newIndex: number) => {
-    setOffers((prev) => {
-      const next = [...prev];
-      const [moved] = next.splice(oldIndex, 1);
-      next.splice(newIndex, 0, moved);
-      return next;
-    });
-  };
-
   const toggleStatus = async (offer: Offer) => {
     setLoading(true);
     try {
@@ -190,8 +181,8 @@ export default function OffersPage() {
           setIsDialogOpen(true);
         }}
         onDelete={handleDeleteOffer}
-        onReorder={handleReorder}
         onStatusToggle={toggleStatus}
+        isLoading={loading}
       />
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
@@ -221,7 +212,6 @@ export default function OffersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {loading && <div className='mt-4 text-center'>Loading...</div>}
     </div>
   );
 }

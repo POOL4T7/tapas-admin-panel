@@ -197,6 +197,7 @@ export default function CategoriesPage() {
         }}
         onDelete={handleDeleteCategory}
         onStatusToggle={toggleStatus}
+        isLoading={loading}
       />
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>

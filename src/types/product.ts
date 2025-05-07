@@ -2,11 +2,13 @@ export type Product = {
   id: string;
   name: string;
   subCategoryId: number;
+  subCategoryName?: string;
   description: string;
   status: boolean;
 
   price: number;
   categoryId: number;
+  categoryName?: string;
 
   // New fields
   tags?: string[];
@@ -17,20 +19,49 @@ export type Product = {
   metadata?: string;
 };
 
-export type MenuProduct = {
+interface Category {
+  id: number;
+  name: string;
+  description: string;
+  imagePath: string | null;
+  status: boolean;
+  tagLine: string | null;
+  metadata: string | null;
+}
+
+interface SubCategory {
+  id: number;
+  name: string;
+  description: string;
+  imagePath: string | null;
+  status: boolean;
+  tagLine: string | null;
+  metadata: string | null;
+  categoryId: number;
+}
+
+interface Item {
+  id: number;
+  name: string;
+  description: string;
+  itemsImagePaths: string[] | null;
+  price: number;
+  status: boolean;
+  allergies: string | null;
+  tagLine: string | null;
+  metadata: string | null;
+  itemTags: string[] | null;
+  ingredients: string[] | null;
+}
+
+export interface MenuProduct {
   menuId: number;
   menuName: string;
-  categoryId: number;
-  categoryName: string;
-  subCategoryId: number;
-  subCategoryName: string;
-  item: {
-    id: number;
-    name: string;
-    description: string;
-    imagePath: string | null;
-    price: number;
-    displayOrder: number | null;
-    status: boolean;
-  };
-};
+  category: Category;
+  subCategory: SubCategory;
+  item: Item;
+  itemDisplayOrder: number;
+  categoryDisplayOrder: number;
+  subCategoryDisplayOrder: number;
+  isActive: boolean;
+}
