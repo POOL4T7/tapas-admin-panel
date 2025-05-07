@@ -95,10 +95,32 @@ export async function uploadProductImage(images: File[], itemId: string) {
   }
 }
 
-
 export async function deleteProduct(productId: string) {
   try {
     const response = await api.delete(`/api/menu/deleteItem/${productId}`);
+    return response.data;
+  } catch (error) {
+    // Handle error as needed (could expand this based on your error handling strategy)
+    throw error;
+  }
+}
+
+type UpdateMenuEntityDisplayOrder = {
+  menuId: string;
+  itemId: number;
+  itemDisplayOrder: number;
+  categoryId: number;
+  subCategoryId: number;
+};
+
+export async function updateMenuEntityDisplayOrder(
+  data: UpdateMenuEntityDisplayOrder[]
+) {
+  try {
+    const response = await api.put(
+      `/api/menuentry/itemdisplayorder/update`,
+      data
+    );
     return response.data;
   } catch (error) {
     // Handle error as needed (could expand this based on your error handling strategy)

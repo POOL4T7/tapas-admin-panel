@@ -1,5 +1,9 @@
 'use client';
-import { getProductsByMenu, updateProductByMenuId } from '@/lib/products-api';
+import {
+  getProductsByMenu,
+  updateMenuEntityDisplayOrder,
+  updateProductByMenuId,
+} from '@/lib/products-api';
 import { useParams } from 'next/navigation';
 import React, { useEffect, useState, useMemo } from 'react';
 import { MenuProduct } from '@/types/product';
@@ -115,7 +119,7 @@ const Page = () => {
     });
   }, [products, selectedCategoryId, selectedSubCategoryId]);
 
-  const handleReorder = (oldIndex: number, newIndex: number) => {
+  const handleReorder = async (oldIndex: number, newIndex: number) => {
     // Get the ids of the filtered products (the visible ones)
     const reorderedFilteredProducts = [...filteredProducts];
     const [removedItem] = reorderedFilteredProducts.splice(oldIndex, 1);
@@ -126,7 +130,6 @@ const Page = () => {
     reorderedFilteredProducts.forEach((p, index) => {
       newOrderMap.set(p.item.id, index + 1); // DRAFT: This assumes displayOrder is 1-based for filtered list
     });
-    console.log('newOrderMap', newOrderMap);
 
     // Update the original products array while preserving the order of non-filtered items
     let filteredItemCounter = 0;
@@ -152,35 +155,37 @@ const Page = () => {
     setProducts(updatedProducts); // Update the main products list
 
     const itemsToUpdateForAPI = reorderedFilteredProducts.map(
-      (product: MenuProduct, index) => ({
-        itemId: product.item.id,
-        displayOrder: index + 1,
-        active: product.isActive, // Corrected to use product.isActive
+      (p: MenuProduct, index) => ({
+        menuId: id?.toString() || '',
+        itemId: Number(p.item.id),
+        itemDisplayOrder: index + 1,
+        categoryId: Number(p.category.id),
+        subCategoryId: Number(p.subCategory.id), // Corrected to use product.isActive
       })
     );
 
     if (itemsToUpdateForAPI.length > 0) {
-      updateProductOrderInMenu(itemsToUpdateForAPI);
+      await updateMenuEntityDisplayOrder(itemsToUpdateForAPI);
     } else {
       toast.info('No changes in order to save.');
     }
   };
 
-  const updateProductOrderInMenu = async (
-    itemsToUpdate: { itemId: number; displayOrder: number; active: boolean }[]
-  ) => {
-    if (!id || typeof id !== 'string') {
-      toast.error('Menu ID is missing.');
-      return;
-    }
-    try {
-      await updateProductByMenuId(id, itemsToUpdate);
-      toast.success('Product order updated successfully!');
-    } catch (error) {
-      console.error('Failed to update product order:', error);
-      toast.error('Failed to update product order.');
-    }
-  };
+  // const updateProductOrderInMenu = async (
+  //   itemsToUpdate: { itemId: number; displayOrder: number; active: boolean }[]
+  // ) => {
+  //   if (!id || typeof id !== 'string') {
+  //     toast.error('Menu ID is missing.');
+  //     return;
+  //   }
+  //   try {
+  //     await updateProductByMenuId(id, itemsToUpdate);
+  //     toast.success('Product order updated successfully!');
+  //   } catch (error) {
+  //     console.error('Failed to update product order:', error);
+  //     toast.error('Failed to update product order.');
+  //   }
+  // };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-IN', {

@@ -136,7 +136,7 @@ export function SubCategoryForm({
           />
         </div>
 
-        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+        <div>
           <FormField
             control={form.control}
             name='name'

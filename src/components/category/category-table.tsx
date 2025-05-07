@@ -92,7 +92,7 @@ export function CategoryTable({
                       {category.name}
                     </TableCell>
 
-                    <TableCell className='max-w-[300px] text-sm border-b border-gray-100'>
+                    <TableCell className='max-w-[300px] text-sm'>
                       {category.description ? (
                         <div className='flex items-center'>
                           <span className='truncate'>

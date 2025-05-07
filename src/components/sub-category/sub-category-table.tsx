@@ -88,19 +88,15 @@ export function SubCategoryTable({
             ) : (
               subCategories.map((subCategory, index) => {
                 return (
-                  <TableRow
-                    key={subCategory.id}
-                    className='[&>td]:py-1 hover:bg-gray-50 transition-colors duration-150'
-                  >
-                    <TableCell className=' font-mono text-xs border-b border-gray-100'>
+                  <TableRow key={subCategory.id}>
+                    <TableCell className='text-center font-mono text-sm'>
                       <span className='ml-5'>{index + 1}</span>
                     </TableCell>
-                    <TableCell className='font-normal text-sm border-b border-gray-100'>
+                    <TableCell className='font-medium'>
                       {subCategory.name}
                     </TableCell>
-                    {/* <TableCell>{menu?.name || 'Unassigned'}</TableCell> */}
 
-                    <TableCell className='font-normal text-sm border-b border-gray-100'>
+                    <TableCell>
                       <Tooltip>
                         <TooltipTrigger>
                           <Switch
@@ -113,7 +109,7 @@ export function SubCategoryTable({
                         </TooltipContent>
                       </Tooltip>
                     </TableCell>
-                    <TableCell className='font-normal text-sm border-b border-gray-100'>
+                    <TableCell>
                       <div className='flex items-center gap-1'>
                         <Tooltip>
                           <TooltipTrigger asChild>
