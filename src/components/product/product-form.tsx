@@ -138,11 +138,13 @@ export function ProductForm({
         form.setValue('tagLine', product.tagLine || '');
         form.setValue('metadata', product.metadata || '');
         form.setValue('allergies', product.allergies || '');
+        form.setValue('categoryId', initialData?.categoryId);
+        form.setValue('subCategoryId', initialData?.subCategoryId);
         setImageUrls(product.itemsImagePaths || []);
       }
     };
     fetchData();
-  }, []);
+  }, [initialData?.id]);
 
   useEffect(() => {
     async function fetchSubCategories() {
@@ -214,7 +216,7 @@ export function ProductForm({
         [],
       itemsImagePaths: imageUrls.filter((url) => url.trim() !== ''),
     };
-
+    console.log('submissionData', submissionData);
     onSubmit(submissionData);
     // toast.success(`${initialData ? 'Product updated' : 'Product created'}!`);
   };

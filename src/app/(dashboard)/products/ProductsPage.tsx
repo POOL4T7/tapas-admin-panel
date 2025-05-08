@@ -60,7 +60,6 @@ export default function ProductsPage() {
         // const menus = await getAllMenus();
         const subCategories = await getAllSubCategories();
         const productList = await getAllProducts();
-        console.log(productList);
         setProducts(productList?.data || []);
         setCategories(
           (data?.data || []).map((cat: Category) => ({
@@ -128,10 +127,9 @@ export default function ProductsPage() {
   const handleEditProduct = async (updatedProduct: Product) => {
     setLoading(true);
     try {
-      const updated = await updateProduct(updatedProduct.id, updatedProduct);
-      setProducts((prev) =>
-        prev.map((p) => (p.id === updatedProduct.id ? updated?.data : p))
-      );
+      await updateProduct(updatedProduct.id, updatedProduct);
+      const productList = await getAllProducts();
+      setProducts(productList?.data || []);
       setIsDialogOpen(false);
       setEditingProduct(null);
       toast.success('Item updated successfully');

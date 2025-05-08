@@ -20,6 +20,7 @@ import {
   updateOffer,
   deleteOffer,
 } from '@/lib/offer-api';
+import { toast } from 'sonner';
 // import { getAllMenus } from '@/lib/menu-api';
 
 const emptyOffer = (): Offer => ({
@@ -67,6 +68,9 @@ export default function OffersPage() {
       ]);
       setIsDialogOpen(false);
       setEditingOffer(null);
+      toast.success('Offer created successfully');
+    } catch {
+      toast.error('Failed to create offer');
     } finally {
       setLoading(false);
     }
@@ -88,6 +92,9 @@ export default function OffersPage() {
       );
       setIsDialogOpen(false);
       setEditingOffer(null);
+      toast.success('Offer updated successfully');
+    } catch {
+      toast.error('Failed to update offer');
     } finally {
       setLoading(false);
     }
